@@ -1,0 +1,247 @@
+:root {
+  --brand: #fee500; /* 카카오 옐로우 톤 - 앱 기본색 */
+  --brand-border: #e6b800;
+  --brand-text: #4a3c00; /* 노란 배경 위에서 흰 글씨보다 대비가 잘 나오는 어두운 색 */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden; /* 내비 앱처럼 화면 자체는 스크롤되지 않는다 */
+  font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  color: #1c1c1e;
+}
+
+/* 지도가 화면 전체를 채우는 배경 레이어 */
+#map {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #e5e5e5; /* 지도 로드 전 임시 배경 */
+  z-index: 0;
+}
+
+/* 상단 떠 있는 타이틀 바 - 지도를 가리지 않게 반투명 */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  padding: 14px 20px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
+  pointer-events: none; /* 지도 드래그/클릭을 막지 않도록 */
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.caution-banner {
+  position: fixed;
+  top: 64px;
+  left: 16px;
+  right: 16px;
+  z-index: 10;
+  padding: 14px 16px;
+  background: #ff9500;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.caution-banner.hidden {
+  display: none;
+}
+
+/* 지도 위에 떠 있는 하단 시트 */
+.bottom-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.18);
+  padding: 8px 20px 24px;
+}
+
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: #ddd;
+  margin: 6px auto 14px;
+}
+
+.sheet-section h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.sheet-section.hidden {
+  display: none;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+select {
+  width: 100%;
+  padding: 10px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 12px;
+}
+
+.primary-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--brand-text);
+  background: var(--brand);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.primary-btn:disabled {
+  background: #f5edb8;
+  color: #a99c4d;
+  cursor: not-allowed;
+}
+
+.secondary-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.status {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #888;
+  min-height: 16px;
+}
+
+/* ---------- 순환 코스 설정 다이얼로그 ---------- */
+
+.course-dialog {
+  width: min(360px, 90vw);
+  border: none;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+}
+
+.course-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.course-dialog h2 {
+  margin: 0 0 16px;
+  font-size: 17px;
+}
+
+/* ---------- 거리 휠 피커 (알람 시간 맞추듯 스크롤로 고르기) ---------- */
+
+.wheel-picker-frame {
+  position: relative;
+  height: 220px; /* 44px * 5줄 - 가운데 1줄이 선택된 값 */
+  margin-bottom: 16px;
+  overflow: hidden;
+  /* 위아래 끝으로 갈수록 흐려지는 효과 */
+  mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+}
+
+.wheel-highlight {
+  position: absolute;
+  top: 88px; /* (220 - 44) / 2 */
+  left: 0;
+  right: 0;
+  height: 44px;
+  border-top: 2px solid var(--brand-border);
+  border-bottom: 2px solid var(--brand-border);
+  background: #fffbe6;
+  pointer-events: none;
+  z-index: 0; /* 배경 역할만 - 글씨는 항상 이 위에 보여야 한다 */
+}
+
+.wheel-picker {
+  position: relative;
+  z-index: 1; /* 하이라이트 배경보다 위에 그려져야 가운데 줄 글씨가 안 가려진다 */
+  height: 100%;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  /* 첫 줄/마지막 줄도 가운데까지 스크롤될 수 있도록 위아래에 여백을 둔다 */
+  padding: 88px 0;
+}
+
+.wheel-item {
+  height: 44px;
+  line-height: 44px;
+  text-align: center;
+  font-size: 15px;
+  color: #bbb;
+  scroll-snap-align: center;
+  transition: color 0.15s, font-size 0.15s;
+}
+
+.wheel-item.active {
+  color: var(--brand-text);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.direction-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.dir-btn {
+  padding: 12px 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #333;
+  background: #f2f3f5;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.dir-btn.selected {
+  border-color: var(--brand-border);
+  background: #fff9d6;
+  color: var(--brand-text);
+  font-weight: 700;
+}

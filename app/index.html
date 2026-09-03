@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>전운보초</title>
+
+  <!-- PWA로 설치 가능하게 만들어주는 설정 파일 -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#fee500" />
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- 지도가 전체 화면을 채우는 배경 레이어. 나머지 UI는 전부 이 위에 떠 있다. -->
+  <div id="map"></div>
+
+  <!-- 상단 떠 있는 타이틀 바 -->
+  <header class="app-header">
+    <h1>전운보초</h1>
+  </header>
+
+  <!-- 주행 중 비보호좌회전/유턴 등 앞두고 뜨는 주의 안내 배너 -->
+  <div id="caution-banner" class="caution-banner hidden"></div>
+
+  <!-- 지도 위에 떠 있는 하단 시트. 안의 섹션들을 상황에 따라 보였다 숨겼다 한다. -->
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+
+    <!-- 코스 시작 전: 다이얼로그를 여는 버튼만 놓여있다 -->
+    <section id="setup-panel" class="sheet-section">
+      <button id="open-dialog-btn" type="button" class="primary-btn">순환 코스 설정</button>
+      <p id="status-msg" class="status"></p>
+    </section>
+
+    <!-- 주행 중 브리핑/리포트가 표시될 자리 -->
+    <section id="briefing-panel" class="sheet-section hidden">
+      <h2>코스 브리핑</h2>
+      <p id="briefing-text"></p>
+    </section>
+
+    <section id="report-panel" class="sheet-section hidden">
+      <h2>주행 리포트</h2>
+      <p id="report-text"></p>
+    </section>
+  </div>
+
+  <!-- 순환 코스를 직접 설정하는 다이얼로그: 거리 + 방향을 고른다 -->
+  <dialog id="course-dialog" class="course-dialog">
+    <h2>순환 코스 설정</h2>
+
+    <label>코스 거리</label>
+    <!-- 알람 시간 맞추듯 스크롤해서 고르는 휠 피커. 값은 js/app.js가 채워 넣는다. -->
+    <div class="wheel-picker-frame">
+      <div class="wheel-highlight"></div>
+      <div id="distance-picker" class="wheel-picker"></div>
+    </div>
+
+    <label>어느 방향으로 돌아볼까요?</label>
+    <div id="direction-grid" class="direction-grid">
+      <button type="button" class="dir-btn" data-bearing="315">↖<br />북서</button>
+      <button type="button" class="dir-btn" data-bearing="0">↑<br />북</button>
+      <button type="button" class="dir-btn" data-bearing="45">↗<br />북동</button>
+
+      <button type="button" class="dir-btn" data-bearing="270">←<br />서</button>
+      <button type="button" class="dir-btn selected" data-bearing="random">🎲<br />무작위</button>
+      <button type="button" class="dir-btn" data-bearing="90">→<br />동</button>
+
+      <button type="button" class="dir-btn" data-bearing="225">↙<br />남서</button>
+      <button type="button" class="dir-btn" data-bearing="180">↓<br />남</button>
+      <button type="button" class="dir-btn" data-bearing="135">↘<br />남동</button>
+    </div>
+
+    <button id="dialog-start-btn" type="button" class="primary-btn">이 코스로 시작</button>
+    <button id="dialog-cancel-btn" type="button" class="secondary-btn">취소</button>
+  </dialog>
+
+  <!--
+    카카오맵 JavaScript 키를 아래 KAKAO_APP_KEY 자리에 넣으세요.
+    발급 방법: 전운보초_실행계획_Phase0-1.md 의 Phase 0 - 2번 참고.
+  -->
+  <script>
+    const KAKAO_APP_KEY = "e47ef0296de555de9d3bc42f45f22b14";
+  </script>
+  <!--
+    앱 키를 URL에 넣어서 SDK를 불러와야 하므로, 정적 <script src>가 아니라
+    JS로 스크립트 태그를 동적으로 만들어 삽입한다.
+  -->
+  <script>
+    // async를 꺼서 로드 순서를 보장하고, 로드가 끝난 뒤에야 app.js를 붙인다.
+    // (그래야 app.js 안에서 kakao 객체를 안전하게 쓸 수 있다.)
+    const sdkScript = document.createElement("script");
+    sdkScript.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&autoload=false`;
+    sdkScript.async = false;
+    sdkScript.onload = () => {
+      const appScript = document.createElement("script");
+      appScript.src = "js/app.js";
+      document.body.appendChild(appScript);
+    };
+    sdkScript.onerror = () => {
+      const statusMsg = document.getElementById("status-msg");
+      if (statusMsg) {
+        statusMsg.textContent =
+          "카카오맵 SDK 로드 실패. 개발자도구 Network 탭에서 sdk.js 요청의 상태 코드를 확인하세요 (키 또는 등록된 도메인을 다시 확인).";
+      }
+    };
+    document.head.appendChild(sdkScript);
+  </script>
+</body>
+</html>

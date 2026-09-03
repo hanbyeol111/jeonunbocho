@@ -1,0 +1,21 @@
+{
+  "name": "전운보초",
+  "short_name": "전운보초",
+  "description": "면허 취득 직후 도로 감각을 익히기 위한 전용 연습 앱",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f6f8",
+  "theme_color": "#fee500",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
