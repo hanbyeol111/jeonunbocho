@@ -7,8 +7,8 @@
 
 ## Phase 0 · 착수 전 확인 (코드 짜기 전에 끝내야 할 것)
 
-- [ ] **1. 플랫폼 확정** — 웹 기반 PWA로 확정 (기획서 권장안 그대로 채택). 앱스토어 심사 없이 브라우저에서 바로 테스트·배포 가능.
-- [ ] **2. 카카오맵 JavaScript API 키 발급**
+- [x] **1. 플랫폼 확정** — 웹 기반 PWA로 확정 (기획서 권장안 그대로 채택). 앱스토어 심사 없이 브라우저에서 바로 테스트·배포 가능.
+- [x] **2. 카카오맵 JavaScript API 키 발급**
   - [Kakao Developers](https://developers.kakao.com)에 카카오 계정으로 로그인
   - "내 애플리케이션" → "애플리케이션 추가하기" → 앱 이름(예: 전운보초) 입력
   - 앱 생성 후 "앱 키" 탭에서 **JavaScript 키** 복사해두기 (이게 `app/index.html`에 들어갈 키)
@@ -16,9 +16,9 @@
     - ⚠️ "제품 링크 관리"의 "웹 도메인"은 카카오톡 공유 링크용이라 **다른 설정**이다. 거기에 등록하면 지도 SDK는 `(failed) net::ERR_BLOCKED_BY_ORB`로 실패한다 (app/README.md의 "왜 지도가 안 뜨나요?" 참고).
   - "제품 설정" → "카카오맵" → **사용 설정 ON** (꺼져 있으면 도메인을 맞게 등록해도 `NotAuthorizedError` 발생)
   - 무료 사용량 한도(일일 쿼터) 확인해두기 — 개발 중엔 충분하지만 나중에 다시 체크
-- [ ] **3. 로컬 개발 환경 준비**
+- [x] **3. 로컬 개발 환경 준비**
   - VS Code + "Live Server" 확장 설치 (HTML을 더블클릭이 아니라 로컬 서버로 열어야 지도 API가 정상 동작)
-  - (선택) Git/GitHub 저장소 만들어서 버전 관리 시작
+  - Git/GitHub 저장소 생성 완료 (https://github.com/hanbyeol111/jeonunbocho)
 
 > Phase 0을 건너뛰고 코드부터 짜면 지도가 아예 안 뜨는 상태에서 원인을 못 찾고 막힙니다. 위 3가지부터 끝내세요.
 
@@ -31,11 +31,11 @@
 - [x] **1. 프로젝트 뼈대 확인** — `app/index.html`, `app/js/app.js`, `app/manifest.json` 기본 골격 생성됨. 발급받은 JS 키를 `index.html`의 `KAKAO_APP_KEY` 자리에 넣기.
 - [x] **2. 지도 띄우기 + 현재 위치 가져오기**
   - 브라우저 Geolocation API로 내 위치 가져와서 카카오맵에 중심으로 표시
-  - ⚠️ 모바일 브라우저는 **HTTPS가 아니면 위치 권한을 거부**합니다. 로컬 테스트는 `localhost`라 괜찮지만, 폰으로 테스트하려면 Phase 1 후반에 GitHub Pages/Vercel 같은 무료 HTTPS 호스팅에 배포해야 합니다.
+  - ⚠️ 모바일 브라우저는 **HTTPS가 아니면 위치 권한을 거부**합니다. 로컬 테스트는 `localhost`라 괜찮지만, 폰으로 테스트하려면 HTTPS 배포가 필요 — GitHub Pages(프론트) + Render(백엔드)로 배포 완료: https://hanbyeol111.github.io/jeonunbocho/
 - [x] **3. 순환 코스 좌표 계산 (하버사인 공식)** — `app/js/app.js`의 `calculateWaypoint()`에 구현되어 있음. 현재 위치 + 임의 방위각 + 사용자가 고른 거리(예: 5km)로 가상 경유지 좌표 하나 계산.
 - [x] **4. 왕복 경로 요청** — `server/` 폴더에 카카오모빌리티 API용 프록시 서버(Node/Express) 생성 완료. `app/js/app.js`의 `requestRoute()`가 이 프록시로 요청을 보낸다.
   - 실행 전 `server/README.md`대로 REST API 키 발급 → `.env` 설정 → `npm install && npm start` 필요.
-  - ⚠️ 아직 실제 REST API 키로 응답 형태를 검증하지 못함. 처음 연동 시 `server/README.md`의 curl 예시로 실제 응답을 먼저 확인할 것.
+  - 실제 REST API 키로 로컬·배포(Render) 둘 다 curl로 "길찾기 성공" 응답 확인 완료.
 - [x] **5. 지도에 경로 그리기** — `app/js/app.js`의 `drawRoute()`가 응답 좌표를 폴리라인으로 지도에 표시하고 경로 범위로 화면을 맞춘다.
 - [x] **6. 코스 브리핑 문구 생성** — `buildBriefing()`. 턴바이턴 안내 개수를 세서 "총 5km, 좌회전 2회·유턴 1회" 같은 출발 전 요약 표시. 실제 경로로 확인 완료.
 - [x] **7. 주행 중 주의 안내** — `startDriveMonitoring()` + `showCaution()`. 안내 문구에 "비보호"·"회전교차로"·"유턴"이 포함된 지점 150m 앞에서 화면 배너 + 음성(SpeechSynthesis) 안내. ⚠️ 실제로 차를 몰면서 GPS로 테스트해본 적은 없음 — 정확도/타이밍은 실주행에서 검증 필요.
@@ -43,10 +43,15 @@
 - [x] **9. 리포트 카드 (단순 버전)** — `buildReport()`. "오늘 좌회전 N회, 우회전 N회, 유턴 N회를 완료했습니다" 요약 카드. Phase 1 목표대로 실제 통과 여부가 아니라 코스에 포함된 지시사항 개수만 센다.
 - [x] **10. PWA 마무리** — 아이콘을 핸들(steering wheel) 모양으로 교체(`icons/icon-192.png`, `icons/icon-512.png`). 서비스워커 오프라인 캐싱은 실제 브라우저 콘솔에서 5개 앱 셸 파일(`/`, `/index.html`, `/css/style.css`, `/js/app.js`, `/manifest.json`)이 전부 캐싱되는 것까지 확인 완료.
 
+## 배포
+
+- 프론트엔드 (GitHub Pages): https://hanbyeol111.github.io/jeonunbocho/ — `main` 브랜치의 `app/` 변경사항이 push되면 GitHub Actions가 자동 재배포
+- 백엔드 (Render): https://jeonunbocho.onrender.com — 무료 플랜이라 15분 이상 요청 없으면 잠들고, 다음 요청에서 깨어나는 데 30초~1분 걸림
+
 ## Phase 1 완료
 
-완성 기준("내 폰에서 순환 코스 하나를 처음부터 끝까지 완주하고, 도착 후 리포트 카드가 뜬다")을 제외한 나머지 항목은 데스크톱 브라우저에서 전부 확인됨. 실제 완성 기준 검증은 HTTPS 배포 후 폰으로 진행 필요 (아래 Phase 2 착수 전 참고).
-- [ ] **11. 완성 기준 검증** — 내 폰에서 순환 코스 하나를 처음부터 끝까지 완주 + 리포트 카드 확인되면 Phase 1 끝.
+- [x] 배포 주소에서 지도 + 순환 코스 경로 요청까지 확인 완료.
+- [ ] **11. 완성 기준 검증** — 내 폰에서 순환 코스 하나를 처음부터 끝까지 완주 + 도착 후 리포트 카드까지 뜨는지 확인. (지도·경로까지는 확인됨, 실제로 걷거나 운전하며 주의 안내·도착 판정·리포트 카드가 뜨는지는 아직 미확인 — 이게 되면 Phase 1 완전히 끝.)
 
 ---
 
