@@ -98,8 +98,12 @@ function calculateWaypoint(lat, lng, distanceKm, bearingDeg = Math.random() * 36
 
 // ---------- 4. 왕복 경로 요청 ----------
 
-// server/ 프록시 서버 주소. 배포할 땐 실제 서버 주소로 바꿔야 한다.
-const ROUTE_PROXY_URL = "http://localhost:3000/api/route";
+// server/ 프록시 서버 주소. 로컬 개발 중(localhost)에는 로컬 프록시를,
+// 배포된 상태에서는 Render에 올려둔 프록시를 쓴다.
+const ROUTE_PROXY_URL =
+  location.hostname === "localhost"
+    ? "http://localhost:3000/api/route"
+    : "https://jeonunbocho.onrender.com/api/route";
 
 /**
  * origin(출발지)에서 waypoint(경유지)를 거쳐 다시 origin으로 돌아오는

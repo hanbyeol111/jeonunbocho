@@ -2,6 +2,13 @@
 
 전체 실행 계획은 상위 폴더의 [`전운보초_실행계획_Phase0-1.md`](../전운보초_실행계획_Phase0-1.md) 참고.
 
+## 배포 주소
+
+- 프론트엔드 (GitHub Pages): https://hanbyeol111.github.io/jeonunbocho/
+- 백엔드 (Render): https://jeonunbocho.onrender.com
+
+⚠️ Render 무료 플랜은 15분 이상 요청이 없으면 서버가 잠들고, 다음 요청이 오면 다시 깨어나는 데 30초~1분 정도 걸린다. 오랜만에 켰을 때 "경로를 요청하는 중..."에서 잠깐 멈춰있는 게 정상이니 당황하지 말 것.
+
 ## 지금 상태
 
 - [x] 프로젝트 뼈대 (index.html / css / js / manifest / service worker)
