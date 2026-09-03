@@ -52,7 +52,7 @@ html, body {
   top: 64px;
   left: 16px;
   right: 16px;
-  z-index: 10;
+  z-index: 20; /* 주행 화면(.nav-screen)보다도 위에 떠야 한다 */
   padding: 14px 16px;
   background: #ff9500;
   color: white;
@@ -244,4 +244,155 @@ select {
   background: #fff9d6;
   color: var(--brand-text);
   font-weight: 700;
+}
+
+/* ---------- 주행 브리핑 (썸네일 + 통계 + 주의구간 요약) ---------- */
+
+.route-thumb {
+  height: 130px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: #f2f3f5;
+  overflow: hidden;
+}
+
+.route-thumb svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.briefing-summary {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #666;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: #f7f7f8;
+  border-radius: 10px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #888;
+}
+
+.stat-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1c1c1e;
+}
+
+.caution-summary {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: #fffbe6;
+  border: 1px solid var(--brand-border);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.caution-summary strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--brand-text);
+}
+
+.caution-summary p {
+  margin: 0;
+  color: #6b5d1a;
+}
+
+.caution-summary.hidden {
+  display: none;
+}
+
+/* ---------- 실주행 화면 (전체화면, 지도 대신 다음 안내에 집중) ---------- */
+
+.nav-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 15; /* 지도·하단시트보다는 위, 주의 배너보다는 아래 */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 32px;
+  background: #14171c;
+  color: white;
+  text-align: center;
+}
+
+.nav-screen.hidden {
+  display: none;
+}
+
+.nav-stop-btn {
+  align-self: flex-end;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.nav-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.nav-big-arrow {
+  font-size: 96px;
+  line-height: 1;
+  color: var(--brand);
+  transition: transform 0.3s ease;
+}
+
+.nav-distance {
+  margin: 4px 0 0;
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.nav-instruction {
+  margin: 0;
+  font-size: 15px;
+  color: #cfd3da;
+  max-width: 280px;
+}
+
+.nav-bottom {
+  width: 100%;
+}
+
+.nav-summary {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #eee;
+}
+
+.nav-tagline {
+  margin: 0;
+  font-size: 12px;
+  color: #888;
 }

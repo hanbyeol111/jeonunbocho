@@ -34,16 +34,59 @@
       <p id="status-msg" class="status"></p>
     </section>
 
-    <!-- 주행 중 브리핑/리포트가 표시될 자리 -->
+    <!-- 경로를 만든 직후: 출발 전 브리핑 (썸네일 + 통계 + 주의구간 요약) -->
     <section id="briefing-panel" class="sheet-section hidden">
-      <h2>코스 브리핑</h2>
-      <p id="briefing-text"></p>
+      <h2>주행 브리핑</h2>
+      <div id="route-thumb" class="route-thumb"></div>
+      <p id="briefing-text" class="briefing-summary"></p>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <span class="stat-label">좌회전</span>
+          <span id="stat-left" class="stat-value">0회</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">우회전</span>
+          <span id="stat-right" class="stat-value">0회</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">유턴</span>
+          <span id="stat-uturn" class="stat-value">0회</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">차선변경</span>
+          <span id="stat-lane" class="stat-value">약 0회</span>
+        </div>
+      </div>
+
+      <div id="caution-summary" class="caution-summary hidden">
+        <strong id="caution-summary-title"></strong>
+        <p id="caution-summary-detail"></p>
+      </div>
+
+      <button id="briefing-start-btn" type="button" class="primary-btn">이 코스로 시작</button>
     </section>
 
     <section id="report-panel" class="sheet-section hidden">
       <h2>주행 리포트</h2>
       <p id="report-text"></p>
     </section>
+  </div>
+
+  <!-- 실제 주행 중: 지도 대신 다음 안내에 집중할 수 있는 전용 화면 -->
+  <div id="nav-screen" class="nav-screen hidden">
+    <button id="nav-stop-btn" type="button" class="nav-stop-btn" aria-label="주행 중단">✕</button>
+
+    <div class="nav-center">
+      <div id="nav-big-arrow" class="nav-big-arrow">⬆</div>
+      <p id="nav-distance" class="nav-distance">-- m</p>
+      <p id="nav-instruction" class="nav-instruction"></p>
+    </div>
+
+    <div class="nav-bottom">
+      <p id="nav-summary" class="nav-summary"></p>
+      <p class="nav-tagline">오늘도 안전운전! 🚗</p>
+    </div>
   </div>
 
   <!-- 순환 코스를 직접 설정하는 다이얼로그: 거리 + 방향을 고른다 -->
@@ -72,7 +115,7 @@
       <button type="button" class="dir-btn" data-bearing="135">↘<br />남동</button>
     </div>
 
-    <button id="dialog-start-btn" type="button" class="primary-btn">이 코스로 시작</button>
+    <button id="dialog-start-btn" type="button" class="primary-btn">경로 만들기</button>
     <button id="dialog-cancel-btn" type="button" class="secondary-btn">취소</button>
   </dialog>
 
