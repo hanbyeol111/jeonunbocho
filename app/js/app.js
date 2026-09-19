@@ -591,6 +591,7 @@ const destinationSearchInput = document.getElementById("destination-search-input
 const destinationSearchBtn = document.getElementById("destination-search-btn");
 const destinationResults = document.getElementById("destination-results");
 const destinationSearchEmpty = document.getElementById("destination-search-empty");
+const myLocationLabel = document.getElementById("my-location-label");
 
 startTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
@@ -889,6 +890,41 @@ function getPlacesService() {
   return placesService;
 }
 
+// ---------- 내 위치 표시 (kakao.maps.services.Geocoder로 좌표 -> 주소 변환) ----------
+
+let geocoderService = null;
+
+function getGeocoderService() {
+  if (!geocoderService) geocoderService = new kakao.maps.services.Geocoder();
+  return geocoderService;
+}
+
+/**
+ * "목적지 지정" 탭 위에 "내 위치: OOO"를 보여준다. 지도가 조용히 재중심되는 것만으로는
+ * 위치를 확인했는지 눈에 잘 안 띄어서, 실제 주소로 변환해 명시적으로 보여준다.
+ * @param {{lat:number,lng:number}|null} pos null이면 "확인 중/실패" 상태를 보여준다.
+ * @param {boolean} failed pos가 null인데 이게 true면 "권한 필요" 메시지를, false면 "확인 중"을 보여준다.
+ */
+function updateMyLocationLabel(pos, failed = false) {
+  if (!myLocationLabel) return;
+
+  if (!pos) {
+    myLocationLabel.textContent = failed
+      ? "내 위치: 확인 안 됨 (위치 권한을 허용해주세요)"
+      : "내 위치 확인 중...";
+    return;
+  }
+
+  getGeocoderService().coord2Address(pos.lng, pos.lat, (result, status) => {
+    if (status === kakao.maps.services.Status.OK && result[0]) {
+      const addr = result[0].road_address?.address_name || result[0].address?.address_name;
+      myLocationLabel.textContent = `내 위치: ${addr || `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`}`;
+    } else {
+      myLocationLabel.textContent = `내 위치: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
+    }
+  });
+}
+
 /** 검색 결과 장소들을 목록으로 그린다. 하나를 누르면 바로 그 장소로 경로를 만든다. */
 function renderDestinationResults(places) {
   destinationResults.innerHTML = "";
@@ -987,13 +1023,17 @@ function enterMapScreen() {
     }
   }
 
+  updateMyLocationLabel(currentPosition); // 이미 아는 위치가 있으면 바로 보여주고, 없으면 "확인 중..." 상태로
+
   getCurrentLocation()
     .then((pos) => {
       currentPosition = pos;
       initMap(pos.lat, pos.lng); // 이미 만들어진 지도이므로 중심/마커만 옮겨간다
+      updateMyLocationLabel(pos);
     })
     .catch(() => {
       statusMsg.textContent = "위치 권한이 없어 기본 위치를 표시 중입니다. 코스를 시작하려면 위치 권한을 허용해주세요.";
+      updateMyLocationLabel(null, true);
     });
 }
 

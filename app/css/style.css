@@ -565,6 +565,16 @@ select {
 
 /* ---------- 목적지 검색 ---------- */
 
+.my-location-label {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  background: var(--navy-soft);
+  border-radius: 8px;
+}
+
 .destination-search-row {
   display: flex;
   gap: 8px;
