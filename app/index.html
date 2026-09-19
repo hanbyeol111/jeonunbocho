@@ -28,9 +28,41 @@
   <div class="bottom-sheet">
     <div class="sheet-handle"></div>
 
-    <!-- 코스 시작 전: 다이얼로그를 여는 버튼만 놓여있다 -->
+    <!-- 코스 시작 전: 목적지 지정 / 순환코스 / 내 리포트 보기 3개 탭으로 나뉜다 -->
     <section id="setup-panel" class="sheet-section">
-      <button id="open-dialog-btn" type="button" class="primary-btn">순환 코스 설정</button>
+      <div id="start-tabs" class="start-tabs" role="tablist">
+        <button type="button" class="start-tab" data-tab="destination" role="tab" aria-selected="false">목적지 지정</button>
+        <button type="button" class="start-tab active" data-tab="loop" role="tab" aria-selected="true">순환코스</button>
+        <button type="button" class="start-tab" data-tab="reports" role="tab" aria-selected="false">내 리포트 보기</button>
+      </div>
+
+      <!-- 목적지 지정: 장소를 검색해서 골라 편도 경로를 만든다 -->
+      <div id="tab-destination" class="start-tab-panel hidden">
+        <div class="destination-search-row">
+          <input
+            id="destination-search-input"
+            type="search"
+            inputmode="search"
+            placeholder="주소, 건물명, 상호명으로 검색"
+            class="destination-search-input"
+          />
+          <button id="destination-search-btn" type="button" class="secondary-btn destination-search-btn">검색</button>
+        </div>
+        <ul id="destination-results" class="destination-results"></ul>
+        <p id="destination-search-empty" class="tab-placeholder hidden">검색 결과가 없어요.</p>
+      </div>
+
+      <!-- 순환코스: 기존 "순환 코스 설정" 다이얼로그를 여는 버튼 -->
+      <div id="tab-loop" class="start-tab-panel">
+        <button id="open-dialog-btn" type="button" class="primary-btn">순환 코스 설정</button>
+      </div>
+
+      <!-- 내 리포트 보기: 완주한 코스의 리포트 기록을 모아서 보여준다 -->
+      <div id="tab-reports" class="start-tab-panel hidden">
+        <ul id="report-history-list" class="report-history-list"></ul>
+        <p id="report-history-empty" class="tab-placeholder">아직 완주한 코스가 없어요.</p>
+      </div>
+
       <p id="status-msg" class="status"></p>
     </section>
 
@@ -134,7 +166,8 @@
     // async를 꺼서 로드 순서를 보장하고, 로드가 끝난 뒤에야 app.js를 붙인다.
     // (그래야 app.js 안에서 kakao 객체를 안전하게 쓸 수 있다.)
     const sdkScript = document.createElement("script");
-    sdkScript.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&autoload=false`;
+    // libraries=services -> 장소 검색(kakao.maps.services.Places)을 쓰기 위해 필요하다.
+    sdkScript.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&libraries=services&autoload=false`;
     sdkScript.async = false;
     sdkScript.onload = () => {
       const appScript = document.createElement("script");

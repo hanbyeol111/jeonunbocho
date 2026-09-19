@@ -29,15 +29,21 @@ npm start
 
 ## 확인 방법
 
-서버가 켜진 상태에서:
+`/api/route`는 두 가지 모드를 지원한다:
 
 ```bash
+# 순환 코스: origin -> waypoint -> origin으로 돌아오는 왕복 경로
 curl -X POST http://localhost:3000/api/route \
   -H "Content-Type: application/json" \
   -d '{"origin":{"lat":37.5665,"lng":126.9780},"waypoint":{"lat":37.58,"lng":126.98}}'
+
+# 목적지 지정: origin에서 destination까지 편도 경로
+curl -X POST http://localhost:3000/api/route \
+  -H "Content-Type: application/json" \
+  -d '{"origin":{"lat":37.5665,"lng":126.9780},"destination":{"lat":37.58,"lng":126.98}}'
 ```
 
-카카오모빌리티 응답 JSON(`routes[0].sections[0].guides`, `roads` 등)이 그대로 돌아오면 정상.
+카카오모빌리티 응답 JSON(`routes[0].sections[0].guides`, `roads` 등)이 그대로 돌아오면 정상. `waypoint`/`destination` 둘 다 없으면 400 에러.
 
 ## 참고
 

@@ -110,14 +110,17 @@ const ROUTE_PROXY_URL =
     : "https://jeonunbocho.onrender.com/api/route";
 
 /**
- * origin(출발지)에서 waypoint(경유지)를 거쳐 다시 origin으로 돌아오는
- * 순환 경로를 프록시 서버에 요청한다. (server/README.md 참고)
+ * 경로를 프록시 서버에 요청한다. (server/README.md 참고)
+ * @param {{lat:number,lng:number}} origin 출발지
+ * @param {{waypoint:object}|{destination:object}} extra
+ *   순환 코스면 { waypoint } - origin에서 waypoint를 거쳐 다시 origin으로 돌아온다.
+ *   목적지 지정이면 { destination } - origin에서 destination까지 편도로 간다.
  */
-async function requestRoute(origin, waypoint) {
+async function requestRoute(origin, extra) {
   const res = await fetch(ROUTE_PROXY_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ origin, waypoint }),
+    body: JSON.stringify({ origin, ...extra }),
   });
 
   const data = await res.json();
@@ -372,12 +375,18 @@ function updateNavDisplay(here, guides) {
   navInstruction.textContent = guideInstructionText(target);
 }
 
-/** 다이얼로그에서 "경로 만들기"까지 끝난 뒤, 브리핑의 "이 코스로 시작"을 누르면 진짜 주행이 시작된다. */
-function enterNavMode(origin, guides) {
+/**
+ * 다이얼로그에서 "경로 만들기"까지 끝난 뒤, 브리핑의 "이 코스로 시작"을 누르면 진짜 주행이 시작된다.
+ * @param {{lat,lng}} origin 출발지
+ * @param {object[]} guides
+ * @param {{lat,lng}} [arrivalPoint] 도착 판정 기준 좌표. 순환 코스는 origin(생략 시 기본값),
+ *   목적지 지정은 검색으로 고른 destination을 넘겨받는다.
+ */
+function enterNavMode(origin, guides, arrivalPoint = origin) {
   navGuideIndex = 1;
   navScreen.classList.remove("hidden");
   updateNavDisplay(origin, guides); // 첫 화면을 바로 채워둔다 (다음 GPS 업데이트를 기다리지 않고)
-  startDriveMonitoring(origin, guides);
+  startDriveMonitoring(origin, guides, arrivalPoint);
 }
 
 // ---------- 8. 도착 판정 + 9. 리포트 카드 ----------
@@ -403,9 +412,10 @@ function buildReport(guides = []) {
 /**
  * 실시간 위치를 지켜보며:
  *  - 주의가 필요한 구간(비보호좌회전·회전교차로·유턴)에 가까워지면 배너/음성으로 미리 알린다.
- *  - 출발지에서 충분히 멀어졌다가 다시 돌아오면 코스 완주로 판정하고 리포트 카드를 띄운다.
+ *  - 출발지에서 충분히 멀어졌다가 arrivalPoint 근처로 들어오면 완주로 판정하고 리포트 카드를 띄운다.
+ *    (순환 코스는 arrivalPoint === origin, 목적지 지정은 검색으로 고른 destination)
  */
-function startDriveMonitoring(origin, guides) {
+function startDriveMonitoring(origin, guides, arrivalPoint = origin) {
   if (!("geolocation" in navigator)) return;
 
   const cautionGuides = findCautionGuides(guides);
@@ -430,7 +440,8 @@ function startDriveMonitoring(origin, guides) {
       const distFromOrigin = distanceMeters(here.lat, here.lng, origin.lat, origin.lng);
       if (distFromOrigin > DEPART_RADIUS_M) hasDeparted = true;
 
-      if (hasDeparted && distFromOrigin <= ARRIVE_RADIUS_M) {
+      const distToArrival = distanceMeters(here.lat, here.lng, arrivalPoint.lat, arrivalPoint.lng);
+      if (hasDeparted && distToArrival <= ARRIVE_RADIUS_M) {
         finishCourse(guides);
       }
     },
@@ -450,7 +461,93 @@ function finishCourse(guides) {
   reportPanel.classList.remove("hidden");
   reportText.textContent = buildReport(guides);
   statusMsg.textContent = "코스 완주! 리포트를 확인하세요.";
+  saveReportToHistory(reportText.textContent);
 }
+
+// ---------- 시작 화면 탭 (목적지 지정 / 순환코스 / 내 리포트 보기) ----------
+
+const REPORT_HISTORY_KEY = "jeonunbocho_report_history";
+const REPORT_HISTORY_MAX = 20;
+
+/** 완주 리포트 기록을 localStorage에서 읽어온다. 저장된 게 없거나 형식이 깨졌으면 빈 배열. */
+function loadReportHistory() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(REPORT_HISTORY_KEY));
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
+/** 완주할 때마다 리포트 문구를 기록에 추가한다. (최신순, 최대 20개까지만 보관) */
+function saveReportToHistory(text) {
+  const history = loadReportHistory();
+  history.unshift({ text, date: new Date().toISOString() });
+  localStorage.setItem(REPORT_HISTORY_KEY, JSON.stringify(history.slice(0, REPORT_HISTORY_MAX)));
+}
+
+function formatReportDate(iso) {
+  const d = new Date(iso);
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 ${hh}:${mm}`;
+}
+
+/** "내 리포트 보기" 탭을 열 때마다 저장된 기록으로 목록을 다시 그린다. */
+function renderReportHistory() {
+  const history = loadReportHistory();
+  reportHistoryList.innerHTML = "";
+  reportHistoryEmpty.classList.toggle("hidden", history.length > 0);
+
+  for (const entry of history) {
+    const li = document.createElement("li");
+    li.className = "report-history-item";
+
+    const dateEl = document.createElement("span");
+    dateEl.className = "report-history-date";
+    dateEl.textContent = formatReportDate(entry.date);
+
+    const textEl = document.createElement("p");
+    textEl.className = "report-history-text";
+    textEl.textContent = entry.text;
+
+    li.appendChild(dateEl);
+    li.appendChild(textEl);
+    reportHistoryList.appendChild(li);
+  }
+}
+
+const startTabs = document.querySelectorAll(".start-tab");
+const startTabPanels = {
+  destination: document.getElementById("tab-destination"),
+  loop: document.getElementById("tab-loop"),
+  reports: document.getElementById("tab-reports"),
+};
+const reportHistoryList = document.getElementById("report-history-list");
+const reportHistoryEmpty = document.getElementById("report-history-empty");
+
+const destinationSearchInput = document.getElementById("destination-search-input");
+const destinationSearchBtn = document.getElementById("destination-search-btn");
+const destinationResults = document.getElementById("destination-results");
+const destinationSearchEmpty = document.getElementById("destination-search-empty");
+
+startTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    startTabs.forEach((t) => {
+      t.classList.remove("active");
+      t.setAttribute("aria-selected", "false");
+    });
+    tab.classList.add("active");
+    tab.setAttribute("aria-selected", "true");
+
+    Object.values(startTabPanels).forEach((panel) => panel.classList.add("hidden"));
+    startTabPanels[tab.dataset.tab].classList.remove("hidden");
+
+    if (tab.dataset.tab === "reports") {
+      renderReportHistory();
+    }
+  });
+});
 
 // ---------- 화면 흐름 연결 ----------
 
@@ -564,11 +661,12 @@ dialogStartBtn.addEventListener("click", () => {
 // 브리핑 화면에서 "이 코스로 시작"을 눌러야 실제로 주의 안내/도착 판정이 켜진다.
 let pendingOrigin = null;
 let pendingGuides = null;
+let pendingArrivalPoint = null; // 순환 코스면 origin과 같고, 목적지 지정이면 검색으로 고른 지점
 
 briefingStartBtn.addEventListener("click", () => {
   if (!pendingOrigin || !pendingGuides) return;
   briefingPanel.classList.add("hidden");
-  enterNavMode(pendingOrigin, pendingGuides);
+  enterNavMode(pendingOrigin, pendingGuides, pendingArrivalPoint || pendingOrigin);
 });
 
 // 주행 중 중단하고 싶을 때 (오른쪽 위 ✕ 버튼)
@@ -616,31 +714,148 @@ async function previewCourse(distanceKm, bearingDeg) {
     );
 
     statusMsg.textContent = "경로를 요청하는 중... (server/ 프록시가 켜져 있어야 합니다)";
-    const routeData = await requestRoute(currentPosition, waypoint);
+    const routeData = await requestRoute(currentPosition, { waypoint });
     const { route, rawPath } = drawRoute(routeData);
 
-    const totalDistanceKm = route.summary?.distance
-      ? Number((route.summary.distance / 1000).toFixed(1))
-      : distanceKm;
-    const durationMin = route.summary?.duration ? Math.round(route.summary.duration / 60) : null;
-    const guides = (route.sections ?? []).flatMap((s) => s.guides ?? []);
-
     pendingOrigin = currentPosition;
-    pendingGuides = guides;
+    pendingArrivalPoint = currentPosition; // 순환 코스: 출발지로 돌아오면 완주
 
     statusMsg.textContent = "코스 준비 완료! 아래에서 확인하고 시작해보세요.";
-    routeThumb.innerHTML = buildRouteThumbnailSVG(rawPath);
-    briefingText.textContent = buildBriefing(totalDistanceKm, durationMin, guides);
-    renderBriefingStats(guides);
-    renderCautionSummary(guides);
-    navSummary.textContent = `${totalDistanceKm}km${durationMin != null ? ` · 약 ${durationMin}분` : ""}`;
-    briefingPanel.classList.remove("hidden");
+    pendingGuides = applyRouteToBriefing(route, rawPath, distanceKm);
   } catch (err) {
     statusMsg.textContent = `오류: ${err.message}`;
   } finally {
     openDialogBtn.disabled = false;
   }
 }
+
+/**
+ * requestRoute()+drawRoute()가 돌려준 route를 브리핑 화면(썸네일/통계/주의구간/요약)에 반영한다.
+ * previewCourse(순환 코스)와 previewDestinationCourse(목적지 지정)가 공통으로 쓴다.
+ * @returns guides - pendingGuides에 저장해둘 안내 지시사항 배열
+ */
+function applyRouteToBriefing(route, rawPath, fallbackDistanceKm) {
+  const totalDistanceKm = route.summary?.distance
+    ? Number((route.summary.distance / 1000).toFixed(1))
+    : fallbackDistanceKm;
+  const durationMin = route.summary?.duration ? Math.round(route.summary.duration / 60) : null;
+  const guides = (route.sections ?? []).flatMap((s) => s.guides ?? []);
+
+  routeThumb.innerHTML = buildRouteThumbnailSVG(rawPath);
+  briefingText.textContent = buildBriefing(totalDistanceKm, durationMin, guides);
+  renderBriefingStats(guides);
+  renderCautionSummary(guides);
+  navSummary.textContent = `${totalDistanceKm}km${durationMin != null ? ` · 약 ${durationMin}분` : ""}`;
+  briefingPanel.classList.remove("hidden");
+
+  return guides;
+}
+
+/**
+ * 목적지 지정 탭에서 검색 결과를 고르면 호출된다. previewCourse와 달리
+ * waypoint 계산이 없고, 도착 판정 기준(pendingArrivalPoint)이 destination이 된다.
+ */
+async function previewDestinationCourse(destination) {
+  statusMsg.textContent = "현재 위치를 확인하는 중...";
+
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+  cautionBanner.classList.add("hidden");
+  reportPanel.classList.add("hidden");
+  briefingPanel.classList.add("hidden");
+  navScreen.classList.add("hidden");
+
+  try {
+    currentPosition = await getCurrentLocation();
+    initMap(currentPosition.lat, currentPosition.lng);
+
+    statusMsg.textContent = "경로를 요청하는 중... (server/ 프록시가 켜져 있어야 합니다)";
+    const routeData = await requestRoute(currentPosition, { destination });
+    const { route, rawPath } = drawRoute(routeData);
+
+    pendingOrigin = currentPosition;
+    pendingArrivalPoint = destination; // 목적지 지정: 검색으로 고른 지점에 도착하면 완주
+
+    const straightLineKm = distanceMeters(
+      currentPosition.lat,
+      currentPosition.lng,
+      destination.lat,
+      destination.lng
+    ) / 1000;
+
+    statusMsg.textContent = "코스 준비 완료! 아래에서 확인하고 시작해보세요.";
+    pendingGuides = applyRouteToBriefing(route, rawPath, Number(straightLineKm.toFixed(1)));
+  } catch (err) {
+    statusMsg.textContent = `오류: ${err.message}`;
+  }
+}
+
+// ---------- 목적지 검색 (kakao.maps.services.Places) ----------
+
+let placesService = null;
+
+function getPlacesService() {
+  if (!placesService) placesService = new kakao.maps.services.Places();
+  return placesService;
+}
+
+/** 검색 결과 장소들을 목록으로 그린다. 하나를 누르면 바로 그 장소로 경로를 만든다. */
+function renderDestinationResults(places) {
+  destinationResults.innerHTML = "";
+  destinationSearchEmpty.classList.toggle("hidden", places.length > 0);
+
+  for (const place of places) {
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "destination-result-item";
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "destination-result-name";
+    nameEl.textContent = place.place_name;
+
+    const addrEl = document.createElement("span");
+    addrEl.className = "destination-result-address";
+    addrEl.textContent = place.road_address_name || place.address_name || "";
+
+    btn.appendChild(nameEl);
+    btn.appendChild(addrEl);
+    btn.addEventListener("click", () => {
+      previewDestinationCourse({ lat: Number(place.y), lng: Number(place.x) });
+    });
+
+    li.appendChild(btn);
+    destinationResults.appendChild(li);
+  }
+}
+
+function searchDestination() {
+  const query = destinationSearchInput.value.trim();
+  if (!query) return;
+
+  // 현재 위치를 알고 있으면 가까운 순으로 정렬해서 찾아준다.
+  const options = currentPosition
+    ? {
+        location: new kakao.maps.LatLng(currentPosition.lat, currentPosition.lng),
+        sort: kakao.maps.services.SortBy.DISTANCE,
+      }
+    : undefined;
+
+  getPlacesService().keywordSearch(
+    query,
+    (results, status) => {
+      renderDestinationResults(status === kakao.maps.services.Status.OK ? results : []);
+    },
+    options
+  );
+}
+
+destinationSearchBtn.addEventListener("click", searchDestination);
+destinationSearchInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") searchDestination();
+});
 
 // ---------- 카카오맵 SDK 로드: 앱을 켜자마자 지도부터 띄운다 ----------
 

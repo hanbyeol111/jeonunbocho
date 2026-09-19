@@ -8,6 +8,13 @@
   box-sizing: border-box;
 }
 
+/* 어디에 붙이든 통하는 공통 "숨김" 유틸리티. (컴포넌트별 .xxx.hidden 규칙들보다
+   우선순위가 낮아서 서로 충돌하지 않는다 - 새 요소를 추가할 때마다 매번
+   .새클래스.hidden을 따로 정의하지 않아도 되게 하기 위함.) */
+.hidden {
+  display: none;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -393,6 +400,143 @@ select {
 
 .nav-tagline {
   margin: 0;
+  font-size: 12px;
+  color: #888;
+}
+
+
+/* ---------- 시작 화면 탭 (목적지 지정 / 순환코스 / 내 리포트 보기) ---------- */
+
+.start-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 4px;
+  background: #f2f3f5;
+  border-radius: 10px;
+}
+
+.start-tab {
+  flex: 1;
+  padding: 10px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.start-tab.active {
+  color: var(--brand-text);
+  background: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.start-tab-panel.hidden {
+  display: none;
+}
+
+.tab-placeholder {
+  margin: 12px 0;
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+}
+
+.report-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.report-history-item {
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  background: #f7f7f8;
+  border-radius: 10px;
+}
+
+.report-history-item:last-child {
+  margin-bottom: 0;
+}
+
+.report-history-date {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #888;
+}
+
+.report-history-text {
+  margin: 0;
+  font-size: 14px;
+  color: #1c1c1e;
+}
+
+/* ---------- 목적지 검색 ---------- */
+
+.destination-search-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.destination-search-input {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.destination-search-btn {
+  width: auto;
+  padding: 0 18px;
+  margin-top: 0;
+  color: var(--brand-text);
+  background: var(--brand);
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.destination-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.destination-result-item {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  text-align: left;
+  background: #f7f7f8;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.destination-result-item:last-child {
+  margin-bottom: 0;
+}
+
+.destination-result-name {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1c1c1e;
+}
+
+.destination-result-address {
+  display: block;
   font-size: 12px;
   color: #888;
 }
