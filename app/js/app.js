@@ -551,6 +551,10 @@ startTabs.forEach((tab) => {
 
 // ---------- 화면 흐름 연결 ----------
 
+const homeScreen = document.getElementById("home-screen");
+const mapScreen = document.getElementById("map-screen");
+const backToHomeBtn = document.getElementById("back-to-home-btn");
+
 const statusMsg = document.getElementById("status-msg");
 const briefingPanel = document.getElementById("briefing-panel");
 const briefingText = document.getElementById("briefing-text");
@@ -857,24 +861,74 @@ destinationSearchInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") searchDestination();
 });
 
-// ---------- 카카오맵 SDK 로드: 앱을 켜자마자 지도부터 띄운다 ----------
+// ---------- 홈 화면 <-> 지도 화면 전환 ----------
+//
+// 앱을 켜면 지도 없이 홈 화면(카드 4개 + 추천 코스)부터 보여준다.
+// 카드를 눌러야 그제서야 지도 화면으로 넘어가고, 그때 처음으로 지도를 만든다
+// (미리 만들어두면 첫 화면부터 지도가 뜨는 것과 다를 게 없어진다).
 
 const DEFAULT_CENTER = { lat: 37.5665, lng: 126.978 }; // 위치 확인 전/실패 시 쓰는 기본 위치 (서울시청)
 
-kakao.maps.load(() => {
-  // 위치 권한 팝업 응답을 기다리지 않고, 기본 위치로 지도를 일단 바로 띄운다.
-  initMap(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng);
-  statusMsg.textContent = "지도를 불러왔습니다. 내 위치를 확인하는 중...";
+let kakaoReady = false;
+let mapInitialized = false;
 
-  getCurrentLocation()
-    .then((pos) => {
-      currentPosition = pos;
-      initMap(pos.lat, pos.lng); // 이미 만들어진 지도이므로 중심/마커만 옮겨간다
-      statusMsg.textContent = "내 위치를 확인했습니다. '순환 코스 설정'을 눌러 시작해보세요.";
-    })
-    .catch(() => {
-      statusMsg.textContent = "위치 권한이 없어 기본 위치를 표시 중입니다. 코스를 시작하려면 위치 권한을 허용해주세요.";
-    });
+kakao.maps.load(() => {
+  kakaoReady = true;
+  // 카카오 SDK 로딩이 느려서, 사용자가 이미 지도 화면으로 넘어가 있는 상태로
+  // 이 콜백을 맞이할 수도 있다 - 그런 경우 여기서 바로 지도를 만들어준다.
+  if (!mapScreen.classList.contains("hidden") && !mapInitialized) {
+    mapInitialized = true;
+    initMap(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng);
+  }
+});
+
+/** 홈 화면의 카드를 누르면 호출된다. 지도는 여기서 딱 한 번만 만들고, 그다음부터는 relayout()만 한다. */
+function enterMapScreen() {
+  homeScreen.classList.add("hidden");
+  mapScreen.classList.remove("hidden");
+
+  if (!mapInitialized && kakaoReady) {
+    mapInitialized = true;
+    initMap(DEFAULT_CENTER.lat, DEFAULT_CENTER.lng);
+  } else if (map) {
+    // display:none이었다가 다시 보이는 것이므로, 카카오맵이 크기를 다시 계산하게 해줘야 한다.
+    map.relayout();
+    if (currentPosition) {
+      map.setCenter(new kakao.maps.LatLng(currentPosition.lat, currentPosition.lng));
+    }
+  }
+  // 실제 "내 위치" 조회는 여기서 미리 하지 않는다 - 코스를 실제로 만들 때
+  // (previewCourse/previewDestinationCourse)가 그 시점에 최신 위치를 가져온다.
+}
+
+function enterHomeScreen() {
+  mapScreen.classList.add("hidden");
+  homeScreen.classList.remove("hidden");
+}
+
+backToHomeBtn.addEventListener("click", enterHomeScreen);
+
+document.getElementById("home-card-destination").addEventListener("click", () => {
+  enterMapScreen();
+  document.querySelector('.start-tab[data-tab="destination"]').click();
+});
+
+document.getElementById("home-card-loop").addEventListener("click", () => {
+  enterMapScreen();
+  document.querySelector('.start-tab[data-tab="loop"]').click();
+});
+
+document.getElementById("home-card-reports").addEventListener("click", () => {
+  enterMapScreen();
+  document.querySelector('.start-tab[data-tab="reports"]').click();
+});
+
+// "특정 요소" 카드는 아직 기능이 없어서(기획서 Phase 3, 자체 라우팅 필요) 비활성 상태로만 둔다.
+
+document.getElementById("recommend-start-btn").addEventListener("click", () => {
+  enterMapScreen();
+  document.querySelector('.start-tab[data-tab="loop"]').click();
+  previewCourse(5.0, undefined); // 추천 코스: 5km, 무작위 방향
 });
 
 // 서비스워커 등록 (PWA 오프라인 지원)

@@ -2,6 +2,8 @@
   --brand: #fee500; /* 카카오 옐로우 톤 - 앱 기본색 */
   --brand-border: #e6b800;
   --brand-text: #4a3c00; /* 노란 배경 위에서 흰 글씨보다 대비가 잘 나오는 어두운 색 */
+  --navy: #1b2340; /* 홈 화면 보조색 - 제목/아이콘/배지에 쓴다 */
+  --navy-soft: #eef0f7; /* 네이비를 옅게 깐 배경 (카드 등) */
 }
 
 * {
@@ -24,6 +26,12 @@ html, body {
   color: #1c1c1e;
 }
 
+/* 지도 화면 전체 컨테이너. 홈 화면에 있는 동안은 .hidden으로 숨겨둔다. */
+.map-screen {
+  position: fixed;
+  inset: 0;
+}
+
 /* 지도가 화면 전체를 채우는 배경 레이어 */
 #map {
   position: fixed;
@@ -41,9 +49,12 @@ html, body {
   left: 0;
   right: 0;
   z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 14px 20px;
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
-  pointer-events: none; /* 지도 드래그/클릭을 막지 않도록 */
+  pointer-events: none; /* 지도 드래그/클릭을 막지 않도록 - 안의 버튼은 따로 auto로 풀어준다 */
 }
 
 .app-header h1 {
@@ -52,6 +63,19 @@ html, body {
   font-weight: 700;
   color: white;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.back-to-home-btn {
+  pointer-events: auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.35);
+  color: white;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .caution-banner {
@@ -538,5 +562,139 @@ select {
 .destination-result-address {
   display: block;
   font-size: 12px;
+  color: #888;
+}
+
+/* ---------- 홈 화면 (지도 없이 뜨는 첫 화면) ---------- */
+
+.home-screen {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  background: #fafafa;
+  padding: 28px 20px 40px;
+}
+
+.home-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.home-greeting {
+  margin: 14px 0 2px;
+  font-size: 14px;
+  color: #888;
+}
+
+.home-question {
+  margin: 0 0 20px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.home-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px;
+  text-align: left;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+}
+
+.home-card.disabled {
+  cursor: default;
+  color: #aaa;
+}
+
+.home-card-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--navy);
+}
+
+.home-card-dot.muted {
+  background: #ccc;
+}
+
+.home-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.home-card.disabled .home-card-title {
+  color: #aaa;
+}
+
+.home-card-subtitle {
+  font-size: 12px;
+  color: #888;
+}
+
+.home-card-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  background: #f0f0f0;
+  border-radius: 999px;
+}
+
+.home-section-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.recommend-card {
+  padding: 18px;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.recommend-badge {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  background: var(--navy);
+  border-radius: 999px;
+}
+
+.recommend-title {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.recommend-stats {
+  margin: 0 0 14px;
+  font-size: 13px;
   color: #888;
 }

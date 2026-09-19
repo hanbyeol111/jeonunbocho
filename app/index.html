@@ -13,11 +13,62 @@
 </head>
 <body>
 
+  <!-- 첫 화면: 지도 없이 뜨는 홈 화면. 여기서 카드를 골라야 지도 화면(#map-screen)으로 넘어간다. -->
+  <div id="home-screen" class="home-screen">
+    <header class="home-header">
+      <h1>오늘의 연습</h1>
+    </header>
+
+    <p class="home-greeting">안녕하세요!</p>
+    <p class="home-question">오늘은 어떤 연습을 할까요?</p>
+    <p id="home-status" class="tab-placeholder hidden"></p>
+
+    <div class="home-grid">
+      <button id="home-card-destination" type="button" class="home-card">
+        <span class="home-card-dot"></span>
+        <span class="home-card-title">목적지 지정</span>
+        <span class="home-card-subtitle">가고 싶은 곳으로</span>
+      </button>
+
+      <button id="home-card-loop" type="button" class="home-card">
+        <span class="home-card-dot"></span>
+        <span class="home-card-title">순환형 코스</span>
+        <span class="home-card-subtitle">20분 · 5km</span>
+      </button>
+
+      <button type="button" class="home-card disabled" disabled>
+        <span class="home-card-badge">준비 중</span>
+        <span class="home-card-dot muted"></span>
+        <span class="home-card-title">특정 요소</span>
+        <span class="home-card-subtitle">유턴 · 합류 · 차선변경</span>
+      </button>
+
+      <button id="home-card-reports" type="button" class="home-card">
+        <span class="home-card-dot"></span>
+        <span class="home-card-title">내 리포트</span>
+        <span class="home-card-subtitle">주행 기록 보기</span>
+      </button>
+    </div>
+
+    <h2 class="home-section-title">추천 코스</h2>
+
+    <div class="recommend-card">
+      <span class="recommend-badge">LV.2 · 5km 코스</span>
+      <p class="recommend-title">도심 순환 코스</p>
+      <p class="recommend-stats">5.0km · 약 20분 · 무작위 방향</p>
+      <button id="recommend-start-btn" type="button" class="primary-btn">시작하기</button>
+    </div>
+  </div>
+
+  <!-- 지도 화면: 홈 화면에서 카드를 고르기 전까지는 숨겨져 있다. -->
+  <div id="map-screen" class="map-screen hidden">
+
   <!-- 지도가 전체 화면을 채우는 배경 레이어. 나머지 UI는 전부 이 위에 떠 있다. -->
   <div id="map"></div>
 
   <!-- 상단 떠 있는 타이틀 바 -->
   <header class="app-header">
+    <button id="back-to-home-btn" type="button" class="back-to-home-btn" aria-label="홈으로">←</button>
     <h1>전운보초</h1>
   </header>
 
@@ -121,6 +172,8 @@
     </div>
   </div>
 
+  </div> <!-- /#map-screen -->
+
   <!-- 순환 코스를 직접 설정하는 다이얼로그: 거리 + 방향을 고른다 -->
   <dialog id="course-dialog" class="course-dialog">
     <h2>순환 코스 설정</h2>
@@ -175,10 +228,15 @@
       document.body.appendChild(appScript);
     };
     sdkScript.onerror = () => {
+      const message =
+        "카카오맵 SDK 로드 실패. 개발자도구 Network 탭에서 sdk.js 요청의 상태 코드를 확인하세요 (키 또는 등록된 도메인을 다시 확인).";
       const statusMsg = document.getElementById("status-msg");
-      if (statusMsg) {
-        statusMsg.textContent =
-          "카카오맵 SDK 로드 실패. 개발자도구 Network 탭에서 sdk.js 요청의 상태 코드를 확인하세요 (키 또는 등록된 도메인을 다시 확인).";
+      if (statusMsg) statusMsg.textContent = message;
+      // 홈 화면은 지도 화면과 별개 화면이라, 실패 메시지를 홈 화면에도 따로 보여줘야 한다.
+      const homeStatus = document.getElementById("home-status");
+      if (homeStatus) {
+        homeStatus.textContent = message;
+        homeStatus.classList.remove("hidden");
       }
     };
     document.head.appendChild(sdkScript);
