@@ -955,7 +955,43 @@ function renderDestinationResults(places) {
   }
 }
 
-function searchDestination() {
+/** kakao.maps.services.Places.keywordSearch()를 프로미스로 감싼다 (상호명·일반 키워드 검색). */
+function keywordSearchAsync(query, options) {
+  return new Promise((resolve) => {
+    getPlacesService().keywordSearch(
+      query,
+      (results, status) => resolve(status === kakao.maps.services.Status.OK ? results : []),
+      options
+    );
+  });
+}
+
+/**
+ * kakao.maps.services.Geocoder.addressSearch()를 프로미스로 감싼다.
+ * keywordSearch와는 다른 API라, 도로명 주소("세종대로 110" 같은)를 정확히
+ * 찾으려면 이걸 같이 돌려야 한다. keywordSearch만으로는 상호명이 없는 순수
+ * 주소 검색에서 결과가 안 나오거나 빠지는 경우가 있다.
+ */
+function addressSearchAsync(query) {
+  return new Promise((resolve) => {
+    getGeocoderService().addressSearch(query, (results, status) =>
+      resolve(status === kakao.maps.services.Status.OK ? results : [])
+    );
+  });
+}
+
+/** Geocoder 결과를 keywordSearch 결과와 같은 모양({place_name, road_address_name, address_name, x, y})으로 맞춘다. */
+function normalizeAddressResult(r) {
+  return {
+    place_name: r.road_address?.address_name || r.address_name, // 상호명이 없으니 주소 자체를 이름으로
+    road_address_name: r.road_address?.address_name || "",
+    address_name: r.address_name,
+    x: r.x,
+    y: r.y,
+  };
+}
+
+async function searchDestination() {
   const query = destinationSearchInput.value.trim();
   if (!query) return;
 
@@ -967,13 +1003,23 @@ function searchDestination() {
       }
     : undefined;
 
-  getPlacesService().keywordSearch(
-    query,
-    (results, status) => {
-      renderDestinationResults(status === kakao.maps.services.Status.OK ? results : []);
-    },
-    options
-  );
+  const [addressResults, placeResults] = await Promise.all([
+    addressSearchAsync(query),
+    keywordSearchAsync(query, options),
+  ]);
+
+  // 도로명 주소 검색 결과를 먼저, 상호명 검색 결과를 이어붙인다. 같은 좌표가 두 검색에서
+  // 다 나올 수 있어서 좌표 기준으로 중복은 제거한다.
+  const seen = new Set();
+  const merged = [];
+  for (const item of [...addressResults.map(normalizeAddressResult), ...placeResults]) {
+    const key = `${item.x},${item.y}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(item);
+  }
+
+  renderDestinationResults(merged);
 }
 
 destinationSearchBtn.addEventListener("click", searchDestination);
