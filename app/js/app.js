@@ -519,6 +519,7 @@ function finishCourse(guides) {
   cautionBanner.classList.add("hidden");
   exitNavMode();
 
+  setupPanel.classList.remove("hidden"); // 브리핑 때 숨겨뒀던 검색/탭 패널을 다시 보이게 한다
   reportPanel.classList.remove("hidden");
   reportText.textContent = buildReport(guides);
   statusMsg.textContent = "코스 완주! 리포트를 확인하세요.";
@@ -620,6 +621,7 @@ const appHeader = document.getElementById("app-header");
 const bottomSheetEl = document.getElementById("bottom-sheet");
 
 const statusMsg = document.getElementById("status-msg");
+const setupPanel = document.getElementById("setup-panel");
 const briefingPanel = document.getElementById("briefing-panel");
 const briefingText = document.getElementById("briefing-text");
 const routeThumb = document.getElementById("route-thumb");
@@ -764,6 +766,7 @@ navStopBtn.addEventListener("click", () => {
     watchId = null;
   }
   exitNavMode();
+  setupPanel.classList.remove("hidden");
   statusMsg.textContent = "주행을 중단했습니다.";
 });
 
@@ -787,6 +790,7 @@ async function previewCourse(distanceKm, bearingDeg) {
   cautionBanner.classList.add("hidden");
   reportPanel.classList.add("hidden");
   briefingPanel.classList.add("hidden");
+  setupPanel.classList.remove("hidden");
   exitNavMode();
 
   try {
@@ -833,6 +837,7 @@ function applyRouteToBriefing(route, rawPath, fallbackDistanceKm) {
   briefingText.textContent = buildBriefing(totalDistanceKm, durationMin, guides);
   renderBriefingStats(guides);
   renderCautionSummary(guides);
+  setupPanel.classList.add("hidden"); // 탭/검색 결과 패널은 브리핑이 보이는 동안 숨긴다
   briefingPanel.classList.remove("hidden");
 
   pendingSummary = { distanceKm: totalDistanceKm, durationMin };
@@ -854,6 +859,7 @@ async function previewDestinationCourse(destination) {
   cautionBanner.classList.add("hidden");
   reportPanel.classList.add("hidden");
   briefingPanel.classList.add("hidden");
+  setupPanel.classList.remove("hidden");
   exitNavMode();
 
   try {
