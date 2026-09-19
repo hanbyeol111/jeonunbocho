@@ -11,7 +11,7 @@
   대체된다 - PWA 오프라인 지원은 유지하면서 이 문제를 근본적으로 없앤다.
 */
 
-const CACHE_NAME = "jeonunbocho-shell-v2";
+const CACHE_NAME = "jeonunbocho-shell-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -22,7 +22,15 @@ const APP_SHELL = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_NAME).then((cache) =>
+      // cache.addAll()은 내부적으로 그냥 fetch()라 이것도 브라우저 HTTP 캐시(10분)에
+      // 걸릴 수 있다. no-store로 직접 받아와서 캐시에 넣는다.
+      Promise.all(
+        APP_SHELL.map((url) =>
+          fetch(url, { cache: "no-store" }).then((res) => cache.put(url, res))
+        )
+      )
+    )
   );
   self.skipWaiting();
 });
@@ -43,9 +51,13 @@ self.addEventListener("fetch", (event) => {
   if (!event.request.url.startsWith(self.location.origin)) return;
 
   event.respondWith(
-    fetch(event.request)
+    // GitHub Pages가 정적 파일에 Cache-Control: max-age=600을 붙여서 내려주기
+    // 때문에, 그냥 fetch()만 하면 "네트워크 우선"이라 해도 브라우저 자체
+    // HTTP 캐시가 그 10분 동안은 여전히 옛날 응답을 돌려준다. cache: "no-store"로
+    // 그 캐시까지 완전히 건너뛰고 항상 서버에서 새로 받아오게 한다.
+    fetch(event.request, { cache: "no-store" })
       .then((response) => {
-        // 성공하면 캐시도 최신 버전으로 함께 갱신해둔다 (다음 오프라인 대비).
+        // 성공하면 서비스워커 캐시도 최신 버전으로 함께 갱신해둔다 (다음 오프라인 대비).
         const responseClone = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
         return response;
