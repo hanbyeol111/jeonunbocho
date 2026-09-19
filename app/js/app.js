@@ -966,7 +966,12 @@ kakao.maps.load(() => {
   }
 });
 
-/** 홈 화면의 카드를 누르면 호출된다. 지도는 여기서 딱 한 번만 만들고, 그다음부터는 relayout()만 한다. */
+/**
+ * 홈 화면의 카드를 누르면 호출된다. 지도는 여기서 딱 한 번만 만들고, 그다음부터는
+ * relayout()만 한다. 들어가자마자 내 위치를 확인해서 그쪽으로 지도를 옮긴다
+ * (코스를 실제로 만들 때 다시 한번 최신 위치를 가져오긴 하지만, 지도 화면에
+ * 들어서는 순간부터 내 위치가 보이는 게 자연스럽다).
+ */
 function enterMapScreen() {
   homeScreen.classList.add("hidden");
   mapScreen.classList.remove("hidden");
@@ -981,8 +986,15 @@ function enterMapScreen() {
       map.setCenter(new kakao.maps.LatLng(currentPosition.lat, currentPosition.lng));
     }
   }
-  // 실제 "내 위치" 조회는 여기서 미리 하지 않는다 - 코스를 실제로 만들 때
-  // (previewCourse/previewDestinationCourse)가 그 시점에 최신 위치를 가져온다.
+
+  getCurrentLocation()
+    .then((pos) => {
+      currentPosition = pos;
+      initMap(pos.lat, pos.lng); // 이미 만들어진 지도이므로 중심/마커만 옮겨간다
+    })
+    .catch(() => {
+      statusMsg.textContent = "위치 권한이 없어 기본 위치를 표시 중입니다. 코스를 시작하려면 위치 권한을 허용해주세요.";
+    });
 }
 
 function enterHomeScreen() {
