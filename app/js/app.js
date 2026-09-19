@@ -132,11 +132,26 @@ async function requestRoute(origin, extra) {
 
 // ---------- 5. 지도에 경로 그리기 ----------
 
-let currentPolyline = null; // 이전 경로 (재시작 시 지우고 새로 그리기 위해 보관)
+let currentPolylines = []; // 이전 경로 (재시작 시 지우고 새로 그리기 위해 보관) - 도로마다 색이 달라서 배열이다
+
+/**
+ * 카카오모빌리티가 도로(road)마다 함께 내려주는 traffic_speed(km/h)를 보고
+ * 대략적인 정체 구간을 색으로 구분한다. 실제 제한속도 데이터가 아니라 그
+ * 도로의 "현재 평균 통행 속도"이므로, 절대적인 기준이 아니라 상대적인
+ * 참고용 색이다. 값이 없으면(고속도로가 아니거나 데이터 미제공) 기본색을 쓴다.
+ */
+function trafficColor(speedKmh) {
+  if (typeof speedKmh !== "number") return "#2d6cdf";
+  if (speedKmh < 15) return "#e53935"; // 정체
+  if (speedKmh < 30) return "#ff9800"; // 서행
+  return "#43a047"; // 원활
+}
 
 /**
  * requestRoute()가 돌려준 카카오모빌리티 응답에서 좌표를 뽑아
- * 지도에 선으로 그린다. 그린 뒤 경로 전체가 화면에 들어오게 범위를 맞춘다.
+ * 지도에 선으로 그린다. 도로(road) 구간별로 traffic_speed에 따라 색을 다르게
+ * 그려서, 실제 내비게이션처럼 어디가 막히는지 한눈에 보이게 한다.
+ * 그린 뒤 경로 전체가 화면에 들어오게 범위를 맞춘다.
  *
  * @returns { route, rawPath } - route는 브리핑 문구용, rawPath({lat,lng}[])는
  *          지도 라이브러리 없이도 쓸 수 있는 좌표 배열 (썸네일 그리기용)
@@ -148,31 +163,39 @@ function drawRoute(routeData) {
   }
 
   const rawPath = [];
+  const segments = []; // { path: kakao.maps.LatLng[], color }
+
   for (const section of route.sections ?? []) {
     for (const road of section.roads ?? []) {
       const vertexes = road.vertexes ?? []; // [lng, lat, lng, lat, ...] 형태로 평탄화되어 있음
+      const segmentPath = [];
       for (let i = 0; i < vertexes.length; i += 2) {
-        rawPath.push({ lat: vertexes[i + 1], lng: vertexes[i] });
+        const point = { lat: vertexes[i + 1], lng: vertexes[i] };
+        rawPath.push(point);
+        segmentPath.push(new kakao.maps.LatLng(point.lat, point.lng));
+      }
+      if (segmentPath.length > 1) {
+        segments.push({ path: segmentPath, color: trafficColor(road.traffic_speed) });
       }
     }
   }
-  const path = rawPath.map((p) => new kakao.maps.LatLng(p.lat, p.lng));
 
-  if (currentPolyline) {
-    currentPolyline.setMap(null); // 코스를 다시 시작할 때 이전 경로가 겹쳐 남지 않도록 지운다
-  }
-  currentPolyline = new kakao.maps.Polyline({
-    map,
-    path,
-    strokeWeight: 5,
-    strokeColor: "#2d6cdf",
-    strokeOpacity: 0.9,
-    strokeStyle: "solid",
-  });
+  currentPolylines.forEach((pl) => pl.setMap(null)); // 코스를 다시 시작할 때 이전 경로가 겹쳐 남지 않도록 지운다
+  currentPolylines = segments.map(
+    (seg) =>
+      new kakao.maps.Polyline({
+        map,
+        path: seg.path,
+        strokeWeight: 6,
+        strokeColor: seg.color,
+        strokeOpacity: 0.9,
+        strokeStyle: "solid",
+      })
+  );
 
-  if (path.length > 0) {
+  if (rawPath.length > 0) {
     const bounds = new kakao.maps.LatLngBounds();
-    path.forEach((p) => bounds.extend(p));
+    rawPath.forEach((p) => bounds.extend(new kakao.maps.LatLng(p.lat, p.lng)));
     map.setBounds(bounds);
   }
 
@@ -337,26 +360,39 @@ function guideTurnGlyph(guidance = "") {
   return { angle: 0 }; // 직진 · 경유지 · 목적지 등은 위쪽 화살표 그대로
 }
 
+/** 안내 배너에 쓸 짧은 방향 단어. 네이버지도처럼 "104m 우회전" 식으로 짧게 붙인다. */
+function guideShortLabel(guide) {
+  const g = guide.guidance || "";
+  if (guide.type === 1000) return "경유지";
+  if (guide.type === 101) return "목적지";
+  if (g.includes("유턴")) return "유턴";
+  if (g.includes("좌회전")) return "좌회전";
+  if (g.includes("우회전")) return "우회전";
+  return "직진";
+}
+
 /**
- * 다음 지점(target guide)에 맞는 안내 문구를 만든다.
- * 차로 단위 데이터는 없으므로(기획서 "조기 차선 안내" 참고), 차선 번호 없이
- * "미리 어느 쪽으로 붙어라"는 정도로 일반화한 문구를 쓴다.
+ * 배너 아래 작은 글씨용 상세 안내문. 차로 단위 데이터는 없으므로(기획서
+ * "조기 차선 안내" 참고), 차선 번호 없이 "미리 어느 쪽으로 붙어라"는 정도로
+ * 일반화한 문구를 쓴다.
  */
 function guideInstructionText(guide) {
   const g = guide.guidance || "";
-  if (guide.type === 1000) return "경유지를 지나갑니다. 잠시 후 방향이 바뀝니다.";
-  if (guide.type === 101) return "목적지 근처입니다. 곧 도착합니다.";
+  if (guide.type === 1000) return "잠시 후 방향이 바뀝니다.";
+  if (guide.type === 101) return "곧 도착합니다.";
   if (g.includes("유턴")) return "유턴을 준비하세요.";
   if (g.includes("좌회전")) return "미리 왼쪽 차선으로 붙어주세요.";
   if (g.includes("우회전")) return "미리 오른쪽 차선으로 붙어주세요.";
-  return g || "직진하세요.";
+  return g;
 }
 
 const NAV_ADVANCE_RADIUS_M = 25; // 이 거리 안으로 들어오면 "이 지점은 지났다"고 보고 다음 지점으로 넘어간다
 let navGuideIndex = 1; // 0번 = "출발지"라서 건너뛰고 시작한다
+let lastKnownPosition = null; // "내 위치로" 버튼이 쓸, 가장 최근 GPS 위치
 
 /** 현재 위치 기준으로 다음 안내 지점을 찾아 화면(화살표/거리/문구)을 갱신한다. */
 function updateNavDisplay(here, guides) {
+  lastKnownPosition = here;
   if (!guides.length) return;
 
   let target = guides[Math.min(navGuideIndex, guides.length - 1)];
@@ -372,21 +408,46 @@ function updateNavDisplay(here, guides) {
   const { angle } = guideTurnGlyph(target.guidance);
   navBigArrow.style.transform = `rotate(${angle}deg)`;
   navDistance.textContent = `${Math.round(dist)}m`;
+  navTurnLabel.textContent = guideShortLabel(target);
   navInstruction.textContent = guideInstructionText(target);
 }
 
 /**
  * 다이얼로그에서 "경로 만들기"까지 끝난 뒤, 브리핑의 "이 코스로 시작"을 누르면 진짜 주행이 시작된다.
+ * 지도는 계속 보여주고(네이버지도 스타일), 대신 상단 타이틀 바와 하단 시트를 숨겨서
+ * 안내 오버레이(.nav-overlay)가 그 자리를 대신하게 한다.
  * @param {{lat,lng}} origin 출발지
  * @param {object[]} guides
  * @param {{lat,lng}} [arrivalPoint] 도착 판정 기준 좌표. 순환 코스는 origin(생략 시 기본값),
  *   목적지 지정은 검색으로 고른 destination을 넘겨받는다.
+ * @param {{distanceKm:number, durationMin:number|null}} [summary] 브리핑에서 계산해둔 총 거리/시간
  */
-function enterNavMode(origin, guides, arrivalPoint = origin) {
+function enterNavMode(origin, guides, arrivalPoint = origin, summary = null) {
   navGuideIndex = 1;
+  appHeader.classList.add("hidden");
+  bottomSheetEl.classList.add("hidden");
   navScreen.classList.remove("hidden");
   updateNavDisplay(origin, guides); // 첫 화면을 바로 채워둔다 (다음 GPS 업데이트를 기다리지 않고)
+
+  if (summary) {
+    navSummary.textContent = `${summary.distanceKm}km${summary.durationMin != null ? ` · 약 ${summary.durationMin}분` : ""}`;
+    if (summary.durationMin != null) {
+      const eta = new Date(Date.now() + summary.durationMin * 60 * 1000);
+      const hh = String(eta.getHours()).padStart(2, "0");
+      const mm = String(eta.getMinutes()).padStart(2, "0");
+      navEta.textContent = `도착 예정 ${hh}:${mm}`;
+    } else {
+      navEta.textContent = "";
+    }
+  }
+
   startDriveMonitoring(origin, guides, arrivalPoint);
+}
+
+function exitNavMode() {
+  navScreen.classList.add("hidden");
+  appHeader.classList.remove("hidden");
+  bottomSheetEl.classList.remove("hidden");
 }
 
 // ---------- 8. 도착 판정 + 9. 리포트 카드 ----------
@@ -456,7 +517,7 @@ function finishCourse(guides) {
     watchId = null;
   }
   cautionBanner.classList.add("hidden");
-  navScreen.classList.add("hidden");
+  exitNavMode();
 
   reportPanel.classList.remove("hidden");
   reportText.textContent = buildReport(guides);
@@ -554,6 +615,8 @@ startTabs.forEach((tab) => {
 const homeScreen = document.getElementById("home-screen");
 const mapScreen = document.getElementById("map-screen");
 const backToHomeBtn = document.getElementById("back-to-home-btn");
+const appHeader = document.getElementById("app-header");
+const bottomSheetEl = document.getElementById("bottom-sheet");
 
 const statusMsg = document.getElementById("status-msg");
 const briefingPanel = document.getElementById("briefing-panel");
@@ -573,9 +636,28 @@ const reportText = document.getElementById("report-text");
 const navScreen = document.getElementById("nav-screen");
 const navBigArrow = document.getElementById("nav-big-arrow");
 const navDistance = document.getElementById("nav-distance");
+const navTurnLabel = document.getElementById("nav-turn-label");
 const navInstruction = document.getElementById("nav-instruction");
 const navSummary = document.getElementById("nav-summary");
+const navEta = document.getElementById("nav-eta");
 const navStopBtn = document.getElementById("nav-stop-btn");
+const navZoomInBtn = document.getElementById("nav-zoom-in-btn");
+const navZoomOutBtn = document.getElementById("nav-zoom-out-btn");
+const navRecenterBtn = document.getElementById("nav-recenter-btn");
+
+navZoomInBtn.addEventListener("click", () => {
+  if (map) map.setLevel(map.getLevel() - 1); // 레벨이 작을수록 확대된 상태다
+});
+
+navZoomOutBtn.addEventListener("click", () => {
+  if (map) map.setLevel(map.getLevel() + 1);
+});
+
+navRecenterBtn.addEventListener("click", () => {
+  if (map && lastKnownPosition) {
+    map.setCenter(new kakao.maps.LatLng(lastKnownPosition.lat, lastKnownPosition.lng));
+  }
+});
 
 const courseDialog = document.getElementById("course-dialog");
 const openDialogBtn = document.getElementById("open-dialog-btn");
@@ -666,20 +748,21 @@ dialogStartBtn.addEventListener("click", () => {
 let pendingOrigin = null;
 let pendingGuides = null;
 let pendingArrivalPoint = null; // 순환 코스면 origin과 같고, 목적지 지정이면 검색으로 고른 지점
+let pendingSummary = null; // { distanceKm, durationMin } - 주행 화면 하단 바에 그대로 보여준다
 
 briefingStartBtn.addEventListener("click", () => {
   if (!pendingOrigin || !pendingGuides) return;
   briefingPanel.classList.add("hidden");
-  enterNavMode(pendingOrigin, pendingGuides, pendingArrivalPoint || pendingOrigin);
+  enterNavMode(pendingOrigin, pendingGuides, pendingArrivalPoint || pendingOrigin, pendingSummary);
 });
 
-// 주행 중 중단하고 싶을 때 (오른쪽 위 ✕ 버튼)
+// 주행 중 중단하고 싶을 때 (하단 바의 ✕ 버튼)
 navStopBtn.addEventListener("click", () => {
   if (watchId !== null) {
     navigator.geolocation.clearWatch(watchId);
     watchId = null;
   }
-  navScreen.classList.add("hidden");
+  exitNavMode();
   statusMsg.textContent = "주행을 중단했습니다.";
 });
 
@@ -703,7 +786,7 @@ async function previewCourse(distanceKm, bearingDeg) {
   cautionBanner.classList.add("hidden");
   reportPanel.classList.add("hidden");
   briefingPanel.classList.add("hidden");
-  navScreen.classList.add("hidden");
+  exitNavMode();
 
   try {
     currentPosition = await getCurrentLocation();
@@ -749,8 +832,9 @@ function applyRouteToBriefing(route, rawPath, fallbackDistanceKm) {
   briefingText.textContent = buildBriefing(totalDistanceKm, durationMin, guides);
   renderBriefingStats(guides);
   renderCautionSummary(guides);
-  navSummary.textContent = `${totalDistanceKm}km${durationMin != null ? ` · 약 ${durationMin}분` : ""}`;
   briefingPanel.classList.remove("hidden");
+
+  pendingSummary = { distanceKm: totalDistanceKm, durationMin };
 
   return guides;
 }
@@ -769,7 +853,7 @@ async function previewDestinationCourse(destination) {
   cautionBanner.classList.add("hidden");
   reportPanel.classList.add("hidden");
   briefingPanel.classList.add("hidden");
-  navScreen.classList.add("hidden");
+  exitNavMode();
 
   try {
     currentPosition = await getCurrentLocation();

@@ -80,10 +80,10 @@ html, body {
 
 .caution-banner {
   position: fixed;
-  top: 64px;
+  top: 130px; /* 주행 중엔 그 위의 .nav-top-banner(두 줄짜리라 더 높다)를 가리지 않게 아래로 */
   left: 16px;
   right: 16px;
-  z-index: 20; /* 주행 화면(.nav-screen)보다도 위에 떠야 한다 */
+  z-index: 20; /* 주행 오버레이(.nav-overlay, z-index 12)보다도 위에 떠야 한다 */
   padding: 14px 16px;
   background: #ff9500;
   color: white;
@@ -350,80 +350,141 @@ select {
   display: none;
 }
 
-/* ---------- 실주행 화면 (전체화면, 지도 대신 다음 안내에 집중) ---------- */
+/* ---------- 실주행 화면 (지도를 계속 보여주면서 그 위에 얹는 오버레이) ----------
+   네이버지도 내비 화면 구조 참고: 상단 큰 안내 배너 + 오른쪽 확대/축소 +
+   가운데 아래 "내 위치로" + 얇은 하단 바. 지도를 가리는 큰 패널은 쓰지 않는다. */
 
-.nav-screen {
+.nav-overlay {
   position: fixed;
   inset: 0;
-  z-index: 15; /* 지도·하단시트보다는 위, 주의 배너보다는 아래 */
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px 24px 32px;
-  background: #14171c;
-  color: white;
-  text-align: center;
+  z-index: 12; /* 지도·하단시트보다는 위, 주의 배너(20)보다는 아래 */
+  pointer-events: none; /* 지도 조작은 그대로 통과시키고, 버튼 각각만 클릭 가능하게 한다 */
 }
 
-.nav-screen.hidden {
+.nav-overlay.hidden {
   display: none;
 }
 
-.nav-stop-btn {
-  align-self: flex-end;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.12);
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.nav-center {
-  flex: 1;
+.nav-top-banner {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--navy);
+  color: white;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  pointer-events: auto;
 }
 
-.nav-big-arrow {
-  font-size: 96px;
+.nav-arrow-icon {
+  flex-shrink: 0;
+  font-size: 34px;
   line-height: 1;
-  color: var(--brand);
   transition: transform 0.3s ease;
 }
 
-.nav-distance {
-  margin: 4px 0 0;
-  font-size: 30px;
+.nav-top-text {
+  min-width: 0;
+}
+
+.nav-headline {
+  margin: 0;
+  font-size: 22px;
   font-weight: 800;
 }
 
-.nav-instruction {
-  margin: 0;
-  font-size: 15px;
-  color: #cfd3da;
-  max-width: 280px;
+.nav-instruction-sub {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #b7bdd6;
 }
 
-.nav-bottom {
-  width: 100%;
+.nav-side-controls {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.nav-side-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: white;
+  color: var(--navy);
+  font-size: 18px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.nav-recenter-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 96px;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  background: white;
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.nav-bottom-bar {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+}
+
+.nav-bottom-icon-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: #f2f3f5;
+  color: #555;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.nav-bottom-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .nav-summary {
-  margin: 0 0 4px;
   font-size: 14px;
-  font-weight: 600;
-  color: #eee;
+  font-weight: 700;
+  color: var(--navy);
 }
 
-.nav-tagline {
-  margin: 0;
+.nav-eta {
   font-size: 12px;
   color: #888;
 }

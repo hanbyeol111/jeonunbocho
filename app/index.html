@@ -66,8 +66,8 @@
   <!-- 지도가 전체 화면을 채우는 배경 레이어. 나머지 UI는 전부 이 위에 떠 있다. -->
   <div id="map"></div>
 
-  <!-- 상단 떠 있는 타이틀 바 -->
-  <header class="app-header">
+  <!-- 상단 떠 있는 타이틀 바. 주행 중에는 대신 안내 배너(.nav-top-banner)가 이 자리를 대신하므로 숨긴다. -->
+  <header id="app-header" class="app-header">
     <button id="back-to-home-btn" type="button" class="back-to-home-btn" aria-label="홈으로">←</button>
     <h1>전운보초</h1>
   </header>
@@ -75,8 +75,8 @@
   <!-- 주행 중 비보호좌회전/유턴 등 앞두고 뜨는 주의 안내 배너 -->
   <div id="caution-banner" class="caution-banner hidden"></div>
 
-  <!-- 지도 위에 떠 있는 하단 시트. 안의 섹션들을 상황에 따라 보였다 숨겼다 한다. -->
-  <div class="bottom-sheet">
+  <!-- 지도 위에 떠 있는 하단 시트. 안의 섹션들을 상황에 따라 보였다 숨겼다 한다. 주행 중에는 통째로 숨긴다. -->
+  <div id="bottom-sheet" class="bottom-sheet">
     <div class="sheet-handle"></div>
 
     <!-- 코스 시작 전: 목적지 지정 / 순환코스 / 내 리포트 보기 3개 탭으로 나뉜다 -->
@@ -156,19 +156,33 @@
     </section>
   </div>
 
-  <!-- 실제 주행 중: 지도 대신 다음 안내에 집중할 수 있는 전용 화면 -->
-  <div id="nav-screen" class="nav-screen hidden">
-    <button id="nav-stop-btn" type="button" class="nav-stop-btn" aria-label="주행 중단">✕</button>
-
-    <div class="nav-center">
-      <div id="nav-big-arrow" class="nav-big-arrow">⬆</div>
-      <p id="nav-distance" class="nav-distance">-- m</p>
-      <p id="nav-instruction" class="nav-instruction"></p>
+  <!-- 실제 주행 중: 지도는 계속 보여주고, 그 위에 안내 배너/버튼/하단 바만 띄운다 (네이버지도 내비 스타일 참고) -->
+  <div id="nav-screen" class="nav-overlay hidden">
+    <!-- 상단 안내 배너: 회전 아이콘 + 거리 + 방향, 그 아래 작은 글씨로 상세 안내 -->
+    <div class="nav-top-banner">
+      <span id="nav-big-arrow" class="nav-arrow-icon">⬆</span>
+      <div class="nav-top-text">
+        <p class="nav-headline"><span id="nav-distance">-- m</span> <span id="nav-turn-label"></span></p>
+        <p id="nav-instruction" class="nav-instruction-sub"></p>
+      </div>
     </div>
 
-    <div class="nav-bottom">
-      <p id="nav-summary" class="nav-summary"></p>
-      <p class="nav-tagline">오늘도 안전운전! 🚗</p>
+    <!-- 오른쪽 확대/축소 -->
+    <div class="nav-side-controls">
+      <button id="nav-zoom-in-btn" type="button" class="nav-side-btn" aria-label="확대">+</button>
+      <button id="nav-zoom-out-btn" type="button" class="nav-side-btn" aria-label="축소">−</button>
+    </div>
+
+    <!-- 내 위치로 재중심 -->
+    <button id="nav-recenter-btn" type="button" class="nav-recenter-btn">◎ 내 위치로</button>
+
+    <!-- 하단 바: 남은 거리/도착 예정 + 종료 버튼 (창처럼 크게 뜨지 않고 얇게) -->
+    <div class="nav-bottom-bar">
+      <button id="nav-stop-btn" type="button" class="nav-bottom-icon-btn" aria-label="주행 중단">✕</button>
+      <div class="nav-bottom-info">
+        <span id="nav-summary" class="nav-summary"></span>
+        <span id="nav-eta" class="nav-eta"></span>
+      </div>
     </div>
   </div>
 
