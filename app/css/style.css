@@ -42,39 +42,51 @@ html, body {
   z-index: 0;
 }
 
-/* 상단 떠 있는 타이틀 바 - 지도를 가리지 않게 반투명 */
+/* 상단 바: 노란 바 안에 뒤로가기 / 가운데 제목 / 내 위치 버튼, 그 아래 안내 문구 */
 .app-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 5;
+  padding: 12px 16px 12px;
+  background: var(--brand);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+
+.app-header-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  padding: 14px 20px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0));
-  pointer-events: none; /* 지도 드래그/클릭을 막지 않도록 - 안의 버튼은 따로 auto로 풀어준다 */
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
-  color: white;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--navy);
 }
 
-.back-to-home-btn {
-  pointer-events: auto;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0, 0, 0, 0.35);
+.app-header-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  text-align: center;
+  color: var(--brand-text);
+}
+
+.app-header-sub:empty {
+  display: none;
+}
+
+.locate-pill {
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
   color: white;
-  font-size: 16px;
-  line-height: 1;
+  background: var(--navy);
+  border: none;
+  border-radius: 999px;
   cursor: pointer;
 }
 
@@ -293,12 +305,6 @@ select {
   display: block;
 }
 
-.briefing-summary {
-  margin: 0 0 14px;
-  font-size: 13px;
-  color: #666;
-}
-
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -490,45 +496,13 @@ select {
 }
 
 
-/* ---------- 시작 패널 (목적지 지정 / 순환코스 / 내 리포트 - 홈 카드가 고른 하나만 보인다) ---------- */
+/* ---------- 시작 패널 (목적지 지정 / 순환코스 - 홈 카드가 고른 하나만 보인다) ---------- */
 
 .tab-placeholder {
   margin: 12px 0;
   font-size: 13px;
   color: #888;
   text-align: center;
-}
-
-.report-history-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 260px;
-  overflow-y: auto;
-}
-
-.report-history-item {
-  padding: 12px 14px;
-  margin-bottom: 8px;
-  background: #f7f7f8;
-  border-radius: 10px;
-}
-
-.report-history-item:last-child {
-  margin-bottom: 0;
-}
-
-.report-history-date {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 12px;
-  color: #888;
-}
-
-.report-history-text {
-  margin: 0;
-  font-size: 14px;
-  color: #1c1c1e;
 }
 
 /* ---------- 목적지 검색 ---------- */
@@ -549,22 +523,46 @@ select {
   margin-bottom: 12px;
 }
 
-.destination-search-input {
+.search-box {
+  display: flex;
   flex: 1;
-  padding: 10px 12px;
-  font-size: 15px;
-  border-radius: 8px;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0 12px;
+  color: var(--navy);
+  background: white;
   border: 1px solid #ddd;
+  border-radius: 10px;
 }
 
-.destination-search-btn {
-  width: auto;
+.search-pin {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.destination-search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 0;
+  font-size: 14px;
+  color: #1c1c1e;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+.search-go {
+  flex: none;
   padding: 0 18px;
-  margin-top: 0;
-  color: var(--brand-text);
-  background: var(--brand);
-  border-radius: 8px;
+  font-size: 14px;
   font-weight: 700;
+  color: white;
+  background: var(--navy);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
 .destination-results {
@@ -604,6 +602,53 @@ select {
   color: #888;
 }
 
+/* ---------- 공통: 아이콘 / 페이지 헤더 / 섹션 제목 ---------- */
+
+.ic {
+  width: 24px;
+  height: 24px;
+  flex: none;
+}
+
+/* 지도 화면 상단 바와 내 리포트/프로필 화면이 함께 쓰는 뒤로가기 버튼 */
+.page-back {
+  width: 34px;
+  height: 34px;
+  padding: 0 0 3px;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--navy);
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.page-header-spacer {
+  width: 34px;
+}
+
+.section-title {
+  margin: 22px 0 12px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
 /* ---------- 홈 화면 (지도 없이 뜨는 첫 화면) ---------- */
 
 .home-screen {
@@ -614,137 +659,17 @@ select {
   padding: 28px 20px 40px;
 }
 
+.home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .home-header h1 {
   margin: 0;
   font-size: 22px;
   font-weight: 800;
   color: var(--navy);
-}
-
-.home-greeting {
-  margin: 14px 0 2px;
-  font-size: 14px;
-  color: #888;
-}
-
-.home-question {
-  margin: 0 0 20px;
-  font-size: 19px;
-  font-weight: 700;
-  color: var(--navy);
-}
-
-.home-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 28px;
-}
-
-.home-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 16px;
-  text-align: left;
-  background: white;
-  border: 1px solid #eee;
-  border-radius: 14px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  cursor: pointer;
-}
-
-.home-card.disabled {
-  cursor: default;
-  color: #aaa;
-}
-
-.home-card-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--navy);
-}
-
-.home-card-dot.muted {
-  background: #ccc;
-}
-
-.home-card-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--navy);
-}
-
-.home-card.disabled .home-card-title {
-  color: #aaa;
-}
-
-.home-card-subtitle {
-  font-size: 12px;
-  color: #888;
-}
-
-.home-card-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #888;
-  background: #f0f0f0;
-  border-radius: 999px;
-}
-
-.home-section-title {
-  margin: 0 0 12px;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--navy);
-}
-
-.recommend-card {
-  padding: 18px;
-  background: white;
-  border: 1px solid #eee;
-  border-radius: 14px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-}
-
-.recommend-badge {
-  display: inline-block;
-  margin-bottom: 8px;
-  padding: 3px 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: white;
-  background: var(--navy);
-  border-radius: 999px;
-}
-
-.recommend-title {
-  margin: 0 0 4px;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--navy);
-}
-
-.recommend-stats {
-  margin: 0 0 14px;
-  font-size: 13px;
-  color: #888;
-}
-
-/* ---------- 앱 껍데기: 로그인 / 면책 동의 / 프로필 ---------- */
-
-/* 홈 헤더: 제목 왼쪽, 프로필 버튼 오른쪽 */
-.home-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 
 .home-profile-btn {
@@ -759,6 +684,318 @@ select {
   cursor: pointer;
 }
 
+.home-greeting {
+  margin: 18px 0 2px;
+  font-size: 14px;
+  color: #888;
+}
+
+/* 질문 문장 밑에 노란 붓 자국(swoosh)을 깐다 */
+.home-question {
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.swoosh {
+  background: linear-gradient(transparent 62%, var(--brand) 62%, var(--brand) 92%, transparent 92%);
+  padding: 0 2px;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.home-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 16px;
+  text-align: left;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+}
+
+.home-card-icon {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 8px;
+  color: var(--navy);
+}
+
+.home-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.home-card-subtitle {
+  font-size: 12px;
+  color: #888;
+}
+
+.home-card-chevron {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--navy);
+}
+
+.home-card.disabled {
+  cursor: default;
+}
+
+.home-card.disabled .home-card-icon,
+.home-card.disabled .home-card-title {
+  color: #b5b5b5;
+}
+
+.home-card-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  background: #f0f0f0;
+  border-radius: 999px;
+}
+
+/* 추천 코스 카드: 오른쪽 아래에 언덕 일러스트 */
+.recommend-card {
+  position: relative;
+  overflow: hidden;
+  padding: 18px;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.recommend-art {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 34%;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.recommend-pill {
+  position: relative;
+  display: inline-block;
+  margin: 0 6px 8px 0;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--brand-text);
+  background: var(--brand);
+  border-radius: 999px;
+}
+
+.recommend-badge {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  background: var(--navy);
+  border-radius: 999px;
+}
+
+.recommend-title {
+  position: relative;
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.recommend-stats {
+  position: relative;
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #888;
+}
+
+.recommend-card .primary-btn {
+  position: relative;
+}
+
+/* ---------- 내 리포트 화면 ---------- */
+
+.reports-screen {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  background: #ffffff;
+  padding: 20px 20px 40px;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.filter-tab {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #888;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.filter-tab.active {
+  color: var(--brand-text);
+  background: var(--brand);
+  border-color: var(--brand-border);
+}
+
+.reports-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  background: var(--navy-soft);
+  border-radius: 14px;
+}
+
+.summary-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+.summary-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.summary-count {
+  margin-left: 4px;
+  font-size: 13px;
+  color: #888;
+}
+
+.summary-car {
+  width: 84px;
+  height: auto;
+}
+
+/* 기록 카드 (내 리포트 / 프로필 공통) */
+.records,
+.report-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.record {
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.record-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.record-main strong {
+  font-size: 15px;
+  color: var(--navy);
+}
+
+.record-date {
+  flex: none;
+  font-size: 12px;
+  color: #999;
+}
+
+.record-sub {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.safe-banner {
+  margin-top: 20px;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--brand-text);
+  background: var(--brand);
+  border-radius: 12px;
+}
+
+/* ---------- 코스 안내(브리핑) 3칸 요약: 거리 / 시간 / 방향 ---------- */
+
+.brief-row {
+  display: flex;
+  margin-bottom: 14px;
+  padding: 12px 0;
+  background: #f7f7f8;
+  border-radius: 12px;
+}
+
+.brief-item {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--navy);
+}
+
+.brief-item + .brief-item {
+  border-left: 1px solid #eee;
+}
+
+.brief-item .ic {
+  width: 20px;
+  height: 20px;
+  margin-bottom: 2px;
+}
+
+.brief-item strong {
+  font-size: 16px;
+  color: #1c1c1e;
+}
+
+.brief-item span {
+  font-size: 11px;
+  color: #999;
+}
+
+/* ---------- 앱 껍데기: 로그인(시작) / 면책 동의 / 프로필 ---------- */
+
 .pill-soon {
   padding: 2px 8px;
   font-size: 11px;
@@ -768,7 +1005,6 @@ select {
   border-radius: 999px;
 }
 
-/* 로그인 / 면책 동의 공통 */
 .auth-screen {
   position: fixed;
   inset: 0;
@@ -781,6 +1017,59 @@ select {
   display: none;
 }
 
+/* 시작 화면: 위에 자동차 + 제목, 가운데 버튼들, 아래에 도로 일러스트 */
+.auth-screen.landing {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.auth-screen.landing.hidden {
+  display: none;
+}
+
+.landing-hero {
+  padding: 48px 24px 8px;
+  text-align: center;
+}
+
+.landing-car {
+  display: block;
+  width: 190px;
+  max-width: 60%;
+  height: auto;
+  margin: 0 auto 6px;
+}
+
+.landing-title {
+  margin: 0 0 8px;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.landing-tagline {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #666;
+}
+
+.landing-body {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 24px 24px 0;
+  text-align: center;
+}
+
+.landing-road {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: auto;
+}
+
 .auth-inner {
   max-width: 420px;
   margin: 0 auto;
@@ -791,32 +1080,11 @@ select {
   text-align: left;
 }
 
-.auth-logo {
-  display: block;
-  margin: 24px auto 16px;
-  border-radius: 22px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-}
-
-.auth-title {
-  margin: 0 0 8px;
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--navy);
-}
-
 .auth-title-sm {
   margin: 8px 0 20px;
   font-size: 21px;
   font-weight: 800;
   color: var(--navy);
-}
-
-.auth-tagline {
-  margin: 0 0 32px;
-  font-size: 15px;
-  line-height: 1.5;
-  color: #666;
 }
 
 .auth-buttons {
@@ -909,20 +1177,6 @@ select {
   display: none;
 }
 
-.profile-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.profile-header h1 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--navy);
-}
-
 .profile-card {
   margin-bottom: 14px;
   padding: 24px 18px 18px;
@@ -980,10 +1234,6 @@ select {
   margin: 12px 0 0;
   font-size: 12px;
   color: #999;
-}
-
-.profile-screen .home-section-title {
-  margin-top: 22px;
 }
 
 .profile-login-btn {

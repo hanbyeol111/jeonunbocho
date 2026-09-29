@@ -6,7 +6,7 @@
   3. 순환 코스 좌표 계산 (하버사인 공식)    -> calculateWaypoint()
   4. 왕복 경로 요청                        -> requestRoute()  (server/ 프록시 서버 필요, README 참고)
   5. 지도에 경로 그리기                    -> drawRoute()
-  6. 코스 브리핑 문구 생성                 -> buildBriefing()
+  6. 코스 브리핑(거리/시간/방향 + 통계)     -> applyRouteToBriefing(), renderBriefingStats()
   7. 주행 중 주의 안내                    -> startDriveMonitoring(), showCaution()
   8. 도착 판정                            -> startDriveMonitoring() 안의 도착 거리 체크, finishCourse()
   9. 리포트 카드 (단순 버전)               -> buildReport()
@@ -213,18 +213,6 @@ function countGuidesByKeyword(guides, keyword) {
 }
 
 /**
- * 카카오 길찾기 API 응답(routes[0].sections[].guides[])을 넣으면
- * "총 5.2km · 약 20분 · 좌회전 2회 · 유턴 1회" 같은 한 줄 요약을 만든다.
- */
-function buildBriefing(totalDistanceKm, durationMin, guides = []) {
-  const left = countGuidesByKeyword(guides, "좌회전");
-  const uturn = countGuidesByKeyword(guides, "유턴");
-  const durationPart = durationMin != null ? ` · 약 ${durationMin}분` : "";
-
-  return `총 ${totalDistanceKm}km${durationPart} · 좌회전 ${left}회 · 유턴 ${uturn}회`;
-}
-
-/**
  * 좌회전/우회전/유턴 개수와, "차선변경 약 N회"(기획서 원안: 출발지/경유지/목적지를
  * 뺀 턴바이턴 지시사항 총 개수로 근사)를 화면의 통계 카드에 채운다.
  */
@@ -389,6 +377,7 @@ function guideInstructionText(guide) {
 const NAV_ADVANCE_RADIUS_M = 25; // 이 거리 안으로 들어오면 "이 지점은 지났다"고 보고 다음 지점으로 넘어간다
 let navGuideIndex = 1; // 0번 = "출발지"라서 건너뛰고 시작한다
 let lastKnownPosition = null; // "내 위치로" 버튼이 쓸, 가장 최근 GPS 위치
+let navStartedAt = null; // 주행을 시작한 시각(ms) - 완주했을 때 실제 걸린 시간을 계산한다
 
 /** 현재 위치 기준으로 다음 안내 지점을 찾아 화면(화살표/거리/문구)을 갱신한다. */
 function updateNavDisplay(here, guides) {
@@ -424,6 +413,7 @@ function updateNavDisplay(here, guides) {
  */
 function enterNavMode(origin, guides, arrivalPoint = origin, summary = null) {
   navGuideIndex = 1;
+  navStartedAt = Date.now();
   appHeader.classList.add("hidden");
   bottomSheetEl.classList.add("hidden");
   navScreen.classList.remove("hidden");
@@ -522,13 +512,20 @@ function finishCourse(guides) {
   reportPanel.classList.remove("hidden");
   reportText.textContent = buildReport(guides);
   statusMsg.textContent = "코스 완주! 리포트를 확인하세요.";
-  saveReportToHistory(reportText.textContent);
+  // 코스 이름·거리는 브리핑 때 정한 값, 걸린 시간은 실제로 주행을 시작한 뒤 흐른 시간이다.
+  const elapsedMin = navStartedAt ? Math.max(1, Math.round((Date.now() - navStartedAt) / 60000)) : null;
+  saveReportToHistory(reportText.textContent, {
+    title: pendingTitle,
+    distanceKm: pendingSummary?.distanceKm ?? null,
+    durationMin: elapsedMin,
+  });
+  navStartedAt = null;
 }
 
 // ---------- 시작 화면 탭 (목적지 지정 / 순환코스 / 내 리포트 보기) ----------
 
 const REPORT_HISTORY_KEY = "jeonunbocho_report_history";
-const REPORT_HISTORY_MAX = 20;
+const REPORT_HISTORY_MAX = 100;
 
 /** 완주 리포트 기록을 localStorage에서 읽어온다. 저장된 게 없거나 형식이 깨졌으면 빈 배열. */
 function loadReportHistory() {
@@ -540,66 +537,43 @@ function loadReportHistory() {
   }
 }
 
-// 기록 목록은 20개까지만 남기므로, 프로필의 "완주한 코스" 횟수는 이 카운터로 따로 센다.
+// 기록 목록은 100개까지만 남기므로, 프로필의 "완주한 코스" 횟수는 이 카운터로 따로 센다.
 // (js/shell.js의 KEYS.completed와 같은 키)
 const COMPLETED_COUNT_KEY = "jeonunbocho_completed_count";
 
-/** 완주할 때마다 리포트 문구를 기록에 추가한다. (최신순, 최대 20개까지만 보관) */
-function saveReportToHistory(text) {
+/**
+ * 완주할 때마다 기록을 추가한다. (최신순, 최대 100개까지만 보관)
+ * extra: { title, distanceKm, durationMin } - 내 리포트 화면이 목록/총 주행 시간에 쓴다.
+ * 이 값들이 생기기 전에 쌓인 옛 기록은 text/date만 있고, 화면에서는 문구로 대체해 보여준다.
+ */
+function saveReportToHistory(text, extra = {}) {
   const history = loadReportHistory();
   // 카운터가 생기기 전에 쌓인 기록이 있으면 그 개수부터 이어서 센다.
   const completedBefore = Number(localStorage.getItem(COMPLETED_COUNT_KEY)) || history.length;
 
-  history.unshift({ text, date: new Date().toISOString() });
+  history.unshift({ text, date: new Date().toISOString(), ...extra });
   localStorage.setItem(REPORT_HISTORY_KEY, JSON.stringify(history.slice(0, REPORT_HISTORY_MAX)));
   localStorage.setItem(COMPLETED_COUNT_KEY, String(completedBefore + 1));
-}
-
-function formatReportDate(iso) {
-  const d = new Date(iso);
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${d.getMonth() + 1}월 ${d.getDate()}일 ${hh}:${mm}`;
-}
-
-/** "내 리포트 보기" 탭을 열 때마다 저장된 기록으로 목록을 다시 그린다. */
-function renderReportHistory() {
-  const history = loadReportHistory();
-  reportHistoryList.innerHTML = "";
-  reportHistoryEmpty.classList.toggle("hidden", history.length > 0);
-
-  for (const entry of history) {
-    const li = document.createElement("li");
-    li.className = "report-history-item";
-
-    const dateEl = document.createElement("span");
-    dateEl.className = "report-history-date";
-    dateEl.textContent = formatReportDate(entry.date);
-
-    const textEl = document.createElement("p");
-    textEl.className = "report-history-text";
-    textEl.textContent = entry.text;
-
-    li.appendChild(dateEl);
-    li.appendChild(textEl);
-    reportHistoryList.appendChild(li);
-  }
 }
 
 // 홈 카드가 이미 무엇을 할지 골랐으므로, 지도 화면에서는 탭 없이 고른 패널 하나만 보여준다.
 const startTabPanels = {
   destination: document.getElementById("tab-destination"),
   loop: document.getElementById("tab-loop"),
-  reports: document.getElementById("tab-reports"),
 };
+// [하단 시트 제목]
 const startPanelTitles = {
-  destination: "목적지 지정",
-  loop: "순환코스",
-  reports: "내 리포트",
+  destination: "목적지 검색",
+  loop: "순환 코스 설정",
+};
+// [상단 바 가운데 제목, 그 아래 안내 문구]
+const mapHeaderTexts = {
+  destination: ["목적지 지정", "원하는 목적지를 검색해보세요!"],
+  loop: ["순환코스", "거리와 방향을 정해 한 바퀴 돌아봐요"],
 };
 const startPanelTitle = document.getElementById("start-panel-title");
-const reportHistoryList = document.getElementById("report-history-list");
-const reportHistoryEmpty = document.getElementById("report-history-empty");
+const mapTitle = document.getElementById("map-title");
+const mapSubtitle = document.getElementById("map-subtitle");
 
 const destinationSearchInput = document.getElementById("destination-search-input");
 const destinationSearchBtn = document.getElementById("destination-search-btn");
@@ -607,15 +581,12 @@ const destinationResults = document.getElementById("destination-results");
 const destinationSearchEmpty = document.getElementById("destination-search-empty");
 const myLocationLabel = document.getElementById("my-location-label");
 
-/** name: "destination" | "loop" | "reports" - 지도 화면 하단 시트에 그 패널만 보이게 한다. */
+/** name: "destination" | "loop" - 지도 화면 하단 시트에 그 패널만 보이게 하고, 상단 바 제목도 맞춘다. */
 function showStartPanel(name) {
   Object.values(startTabPanels).forEach((panel) => panel.classList.add("hidden"));
   startTabPanels[name].classList.remove("hidden");
   startPanelTitle.textContent = startPanelTitles[name];
-
-  if (name === "reports") {
-    renderReportHistory();
-  }
+  [mapTitle.textContent, mapSubtitle.textContent] = mapHeaderTexts[name];
 }
 
 // ---------- 화면 흐름 연결 ----------
@@ -628,7 +599,9 @@ const bottomSheetEl = document.getElementById("bottom-sheet");
 
 const statusMsg = document.getElementById("status-msg");
 const briefingPanel = document.getElementById("briefing-panel");
-const briefingText = document.getElementById("briefing-text");
+const briefDistance = document.getElementById("brief-distance");
+const briefDuration = document.getElementById("brief-duration");
+const briefDirection = document.getElementById("brief-direction");
 const routeThumb = document.getElementById("route-thumb");
 const statLeft = document.getElementById("stat-left");
 const statRight = document.getElementById("stat-right");
@@ -757,6 +730,9 @@ let pendingOrigin = null;
 let pendingGuides = null;
 let pendingArrivalPoint = null; // 순환 코스면 origin과 같고, 목적지 지정이면 검색으로 고른 지점
 let pendingSummary = null; // { distanceKm, durationMin } - 주행 화면 하단 바에 그대로 보여준다
+let pendingTitle = ""; // 완주 기록에 남길 코스 이름 ("순환 코스" / "내 위치 → 장소명")
+let pendingDirectionLabel = "-"; // 브리핑의 '방향' 칸 ("무작위" / "북동" / "편도")
+const DIRECTION_NAMES = { 0: "북", 45: "북동", 90: "동", 135: "남동", 180: "남", 225: "남서", 270: "서", 315: "북서" };
 
 briefingStartBtn.addEventListener("click", () => {
   if (!pendingOrigin || !pendingGuides) return;
@@ -815,6 +791,9 @@ async function previewCourse(distanceKm, bearingDeg) {
     pendingOrigin = currentPosition;
     pendingArrivalPoint = currentPosition; // 순환 코스: 출발지로 돌아오면 완주
 
+    pendingTitle = "순환 코스";
+    pendingDirectionLabel = bearingDeg === undefined ? "무작위" : (DIRECTION_NAMES[bearingDeg] ?? "지정");
+
     statusMsg.textContent = "코스 준비 완료! 아래에서 확인하고 시작해보세요.";
     pendingGuides = applyRouteToBriefing(route, rawPath, distanceKm);
   } catch (err) {
@@ -837,7 +816,9 @@ function applyRouteToBriefing(route, rawPath, fallbackDistanceKm) {
   const guides = (route.sections ?? []).flatMap((s) => s.guides ?? []);
 
   routeThumb.innerHTML = buildRouteThumbnailSVG(rawPath);
-  briefingText.textContent = buildBriefing(totalDistanceKm, durationMin, guides);
+  briefDistance.textContent = `${totalDistanceKm}km`;
+  briefDuration.textContent = durationMin != null ? `약 ${durationMin}분` : "-";
+  briefDirection.textContent = pendingDirectionLabel;
   renderBriefingStats(guides);
   renderCautionSummary(guides);
   briefingPanel.classList.remove("hidden");
@@ -851,7 +832,7 @@ function applyRouteToBriefing(route, rawPath, fallbackDistanceKm) {
  * 목적지 지정 탭에서 검색 결과를 고르면 호출된다. previewCourse와 달리
  * waypoint 계산이 없고, 도착 판정 기준(pendingArrivalPoint)이 destination이 된다.
  */
-async function previewDestinationCourse(destination) {
+async function previewDestinationCourse(destination, name = "목적지") {
   statusMsg.textContent = "현재 위치를 확인하는 중...";
 
   if (watchId !== null) {
@@ -880,6 +861,9 @@ async function previewDestinationCourse(destination) {
       destination.lat,
       destination.lng
     ) / 1000;
+
+    pendingTitle = `내 위치 → ${name}`;
+    pendingDirectionLabel = "편도";
 
     statusMsg.textContent = "코스 준비 완료! 아래에서 확인하고 시작해보세요.";
     pendingGuides = applyRouteToBriefing(route, rawPath, Number(straightLineKm.toFixed(1)));
@@ -957,7 +941,7 @@ function renderDestinationResults(places) {
       // 검색창과 탭은 그대로 두고, 후보 목록만 지운다 - 고른 뒤에도 예전 후보들이 남아있으면 헷갈린다.
       destinationResults.innerHTML = "";
       destinationSearchEmpty.classList.add("hidden");
-      previewDestinationCourse({ lat: Number(place.y), lng: Number(place.x) });
+      previewDestinationCourse({ lat: Number(place.y), lng: Number(place.x) }, place.place_name);
     });
 
     li.appendChild(btn);
@@ -1110,9 +1094,19 @@ document.getElementById("home-card-loop").addEventListener("click", () => {
   showStartPanel("loop");
 });
 
-document.getElementById("home-card-reports").addEventListener("click", () => {
-  enterMapScreen();
-  showStartPanel("reports");
+// "내 리포트" 카드는 지도가 필요 없는 독립 화면이라 js/shell.js가 처리한다.
+
+// 상단 바의 "내 위치" 버튼: 지금 위치를 다시 확인해서 지도를 그쪽으로 옮긴다.
+document.getElementById("header-locate-btn").addEventListener("click", async () => {
+  try {
+    const pos = await getCurrentLocation();
+    currentPosition = pos;
+    initMap(pos.lat, pos.lng);
+    updateMyLocationLabel(pos);
+  } catch {
+    statusMsg.textContent = "위치 권한이 없어 내 위치를 확인할 수 없어요. 위치 권한을 허용해주세요.";
+    updateMyLocationLabel(null, true);
+  }
 });
 
 // "특정 요소" 카드는 아직 기능이 없어서(기획서 Phase 3, 자체 라우팅 필요) 비활성 상태로만 둔다.

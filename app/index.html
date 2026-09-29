@@ -18,13 +18,15 @@
     처음에 어느 것을 보여줄지 정한다. 전부 hidden으로 시작해서, 잘못된 화면이 잠깐 비치는 걸 막는다.
   -->
 
-  <!-- 1) 로그인 화면: 지금은 껍데기만. 소셜 로그인 버튼은 비활성이고 "둘러보기"만 동작한다. -->
-  <div id="login-screen" class="auth-screen hidden">
-    <div class="auth-inner">
-      <img class="auth-logo" src="icons/icon-192.png" alt="" width="88" height="88" />
-      <h1 class="auth-title">전운보초</h1>
-      <p class="auth-tagline">면허 딴 직후, 진짜 도로 감각을<br />익히는 연습 앱</p>
+  <!-- 1) 로그인(시작) 화면: 지금은 껍데기만. 소셜 로그인 버튼은 비활성이고 "둘러보기"만 동작한다. -->
+  <div id="login-screen" class="auth-screen landing hidden">
+    <div class="landing-hero">
+      <img class="landing-car" src="img/car.svg" alt="" />
+      <h1 class="landing-title">전운보초</h1>
+      <p class="landing-tagline">면허 딴 직후, 진짜 도로 감각을<br />익히는 연습 앱</p>
+    </div>
 
+    <div class="landing-body">
       <div class="auth-buttons">
         <button type="button" class="auth-provider" disabled>
           <span>카카오로 시작하기</span><span class="pill-soon">준비 중</span>
@@ -40,6 +42,8 @@
       <button id="guest-start-btn" type="button" class="primary-btn">로그인 없이 둘러보기</button>
       <p class="auth-note">로그인은 추후 지원할 예정이에요.<br />지금은 기록이 이 기기에만 저장돼요.</p>
     </div>
+
+    <img class="landing-road" src="img/road.svg" alt="" />
   </div>
 
   <!-- 2) 면책 동의 화면: 처음 한 번, 동의해야 홈으로 넘어간다. 프로필에서 다시 볼 때는 동의 체크가 빠진다. -->
@@ -84,51 +88,85 @@
     </header>
 
     <p class="home-greeting">안녕하세요!</p>
-    <p class="home-question">오늘은 어떤 연습을 할까요?</p>
+    <p class="home-question"><span class="swoosh">오늘은 어떤 연습을 할까요?</span></p>
     <p id="home-status" class="tab-placeholder hidden"></p>
 
     <div class="home-grid">
       <button id="home-card-destination" type="button" class="home-card">
-        <span class="home-card-dot"></span>
+        <svg class="ic home-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg>
         <span class="home-card-title">목적지 지정</span>
         <span class="home-card-subtitle">가고 싶은 곳으로</span>
+        <span class="home-card-chevron" aria-hidden="true">›</span>
       </button>
 
       <button id="home-card-loop" type="button" class="home-card">
-        <span class="home-card-dot"></span>
+        <svg class="ic home-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><path d="M3.3 11.2c3-.2 5.3.2 6.5.8M20.7 11.2c-3-.2-5.3.2-6.5.8M12 14.2V20.7"/></svg>
         <span class="home-card-title">순환형 코스</span>
         <span class="home-card-subtitle">20분 · 5km</span>
+        <span class="home-card-chevron" aria-hidden="true">›</span>
       </button>
 
       <button type="button" class="home-card disabled" disabled>
         <span class="home-card-badge">준비 중</span>
-        <span class="home-card-dot muted"></span>
+        <svg class="ic home-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="3.2"/><path d="M4 20c0-3.5 2.7-6 6-6s6 2.5 6 6M18 5v6M15 8h6"/></svg>
         <span class="home-card-title">특정 요소</span>
         <span class="home-card-subtitle">유턴 · 합류 · 차선변경</span>
       </button>
 
       <button id="home-card-reports" type="button" class="home-card">
-        <span class="home-card-dot"></span>
+        <svg class="ic home-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 17l-5.2 2.7 1-5.9L3.5 9.7l5.9-.8z"/></svg>
         <span class="home-card-title">내 리포트</span>
         <span class="home-card-subtitle">주행 기록 보기</span>
+        <span class="home-card-chevron" aria-hidden="true">›</span>
       </button>
     </div>
 
-    <h2 class="home-section-title">추천 코스</h2>
-
     <div class="recommend-card">
+      <img class="recommend-art" src="img/hills.svg" alt="" />
+      <span class="recommend-pill">추천 코스</span>
       <span class="recommend-badge">LV.2 · 5km 코스</span>
       <p class="recommend-title">도심 순환 코스</p>
       <p class="recommend-stats">5.0km · 약 20분 · 무작위 방향</p>
-      <button id="recommend-start-btn" type="button" class="primary-btn">시작하기</button>
+      <button id="recommend-start-btn" type="button" class="primary-btn">시작하기 <span aria-hidden="true">›</span></button>
     </div>
+  </div>
+
+  <!-- 3-2) 내 리포트 화면: 완주 기록을 필터(전체/이번 주/이번 달)로 걸러 보여준다. js/shell.js가 그린다. -->
+  <div id="reports-screen" class="reports-screen hidden">
+    <header class="page-header">
+      <button id="reports-back-btn" type="button" class="page-back" aria-label="홈으로">‹</button>
+      <h1>내 리포트</h1>
+      <span class="page-header-spacer"></span>
+    </header>
+
+    <div id="reports-filters" class="filter-tabs" role="group" aria-label="기간">
+      <button type="button" class="filter-tab active" data-filter="all">전체</button>
+      <button type="button" class="filter-tab" data-filter="week">이번 주</button>
+      <button type="button" class="filter-tab" data-filter="month">이번 달</button>
+    </div>
+
+    <div class="reports-summary">
+      <div>
+        <span class="summary-label">총 주행 시간</span>
+        <strong id="reports-total-time" class="summary-value">0분</strong>
+        <span id="reports-total-count" class="summary-count">(0회)</span>
+      </div>
+      <img class="summary-car" src="img/car.svg" alt="" />
+    </div>
+
+    <h2 class="section-title">최근 기록</h2>
+    <ul id="reports-list" class="records"></ul>
+    <p id="reports-empty" class="tab-placeholder">이 기간에 완주한 코스가 없어요.</p>
+
+    <div class="safe-banner">⭐ 오늘도 안전한 운전 연습해요!</div>
   </div>
 
   <!-- 4) 프로필 화면: 계정 없이 이 기기에만 저장되는 프로필. 로그인은 추후. -->
   <div id="profile-screen" class="profile-screen hidden">
-    <header class="profile-header">
-      <button id="profile-back-btn" type="button" class="back-to-home-btn" aria-label="홈으로">←</button>
+    <header class="page-header">
+      <button id="profile-back-btn" type="button" class="page-back" aria-label="홈으로">‹</button>
       <h1>내 프로필</h1>
+      <span class="page-header-spacer"></span>
     </header>
 
     <div class="profile-card">
@@ -151,7 +189,7 @@
       </div>
     </div>
 
-    <h2 class="home-section-title">최근 기록</h2>
+    <h2 class="section-title">최근 기록</h2>
     <ul id="profile-report-list" class="report-history-list"></ul>
     <p id="profile-report-empty" class="tab-placeholder">아직 완주한 코스가 없어요.</p>
 
@@ -167,10 +205,14 @@
   <!-- 지도가 전체 화면을 채우는 배경 레이어. 나머지 UI는 전부 이 위에 떠 있다. -->
   <div id="map"></div>
 
-  <!-- 상단 떠 있는 타이틀 바. 주행 중에는 대신 안내 배너(.nav-top-banner)가 이 자리를 대신하므로 숨긴다. -->
+  <!-- 상단 바: 뒤로가기 / 가운데 제목 / 내 위치. 주행 중에는 대신 안내 배너(.nav-top-banner)가 이 자리를 쓰므로 숨긴다. -->
   <header id="app-header" class="app-header">
-    <button id="back-to-home-btn" type="button" class="back-to-home-btn" aria-label="홈으로">←</button>
-    <h1>전운보초</h1>
+    <div class="app-header-row">
+      <button id="back-to-home-btn" type="button" class="page-back" aria-label="홈으로">‹</button>
+      <h1 id="map-title">전운보초</h1>
+      <button id="header-locate-btn" type="button" class="locate-pill">➤ 내 위치</button>
+    </div>
+    <p id="map-subtitle" class="app-header-sub"></p>
   </header>
 
   <!-- 주행 중 비보호좌회전/유턴 등 앞두고 뜨는 주의 안내 배너 -->
@@ -180,7 +222,7 @@
   <div id="bottom-sheet" class="bottom-sheet">
     <div class="sheet-handle"></div>
 
-    <!-- 코스 시작 전: 홈에서 고른 것(목적지 지정 / 순환코스 / 내 리포트)의 패널 하나만 보인다. 탭 없음. -->
+    <!-- 코스 시작 전: 홈에서 고른 것(목적지 지정 / 순환코스)의 패널 하나만 보인다. 탭 없음. -->
     <section id="setup-panel" class="sheet-section">
       <h2 id="start-panel-title"></h2>
 
@@ -188,14 +230,17 @@
       <div id="tab-destination" class="start-tab-panel hidden">
         <p id="my-location-label" class="my-location-label">내 위치 확인 중...</p>
         <div class="destination-search-row">
-          <input
-            id="destination-search-input"
-            type="search"
-            inputmode="search"
-            placeholder="주소, 건물명, 상호명으로 검색"
-            class="destination-search-input"
-          />
-          <button id="destination-search-btn" type="button" class="secondary-btn destination-search-btn">검색</button>
+          <label class="search-box">
+            <svg class="ic search-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg>
+            <input
+              id="destination-search-input"
+              type="search"
+              inputmode="search"
+              placeholder="주소, 건물명, 상호명으로 검색"
+              class="destination-search-input"
+            />
+          </label>
+          <button id="destination-search-btn" type="button" class="search-go">검색</button>
         </div>
         <ul id="destination-results" class="destination-results"></ul>
         <p id="destination-search-empty" class="tab-placeholder hidden">검색 결과가 없어요.</p>
@@ -206,20 +251,20 @@
         <button id="open-dialog-btn" type="button" class="primary-btn">순환 코스 설정</button>
       </div>
 
-      <!-- 내 리포트 보기: 완주한 코스의 리포트 기록을 모아서 보여준다 -->
-      <div id="tab-reports" class="start-tab-panel hidden">
-        <ul id="report-history-list" class="report-history-list"></ul>
-        <p id="report-history-empty" class="tab-placeholder">아직 완주한 코스가 없어요.</p>
-      </div>
-
       <p id="status-msg" class="status"></p>
     </section>
 
     <!-- 경로를 만든 직후: 출발 전 브리핑 (썸네일 + 통계 + 주의구간 요약) -->
     <section id="briefing-panel" class="sheet-section hidden">
-      <h2>주행 브리핑</h2>
+      <h2>코스 안내</h2>
+
+      <div class="brief-row">
+        <div class="brief-item"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg><strong id="brief-distance">-</strong><span>거리</span></div>
+        <div class="brief-item"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><strong id="brief-duration">-</strong><span>시간</span></div>
+        <div class="brief-item"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 10-2.5 5.8"/><path d="M20 5v5h-5"/></svg><strong id="brief-direction">-</strong><span>방향</span></div>
+      </div>
+
       <div id="route-thumb" class="route-thumb"></div>
-      <p id="briefing-text" class="briefing-summary"></p>
 
       <div class="stats-grid">
         <div class="stat-box">
@@ -245,7 +290,7 @@
         <p id="caution-summary-detail"></p>
       </div>
 
-      <button id="briefing-start-btn" type="button" class="primary-btn">이 코스로 시작</button>
+      <button id="briefing-start-btn" type="button" class="primary-btn">시작하기 <span aria-hidden="true">›</span></button>
     </section>
 
     <section id="report-panel" class="sheet-section hidden">

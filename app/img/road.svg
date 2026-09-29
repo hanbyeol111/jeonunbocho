@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 150" preserveAspectRatio="xMidYMax slice">
+  <path d="M0 70 Q60 30 120 62 T250 55 T400 45 V150 H0Z" fill="#fff5b8"/>
+  <path d="M0 98 Q90 62 190 90 T400 78 V150 H0Z" fill="#ffee8c"/>
+  <path d="M-10 150 C60 112 150 132 230 108 S340 96 410 88 L410 150Z" fill="#f4e9a0"/>
+  <path d="M-10 150 C60 112 150 132 230 108 S340 96 410 88" fill="none" stroke="#fffdf0" stroke-width="3" stroke-dasharray="14 10" stroke-linecap="round" transform="translate(0,14)"/>
+  <g transform="translate(30,74)"><rect x="6" y="14" width="4" height="14" fill="#8d6e63"/><circle cx="8" cy="10" r="12" fill="#9ccc65"/></g>
+  <g transform="translate(58,84) scale(.7)"><rect x="6" y="14" width="4" height="14" fill="#8d6e63"/><circle cx="8" cy="10" r="12" fill="#aed581"/></g>
+  <g transform="translate(350,52)"><rect x="6" y="14" width="4" height="14" fill="#8d6e63"/><circle cx="8" cy="10" r="12" fill="#9ccc65"/></g>
+  <g transform="translate(156,84) scale(.11)">
+    <rect x="300" y="330" width="400" height="190" rx="115" fill="#1b2340"/>
+    <rect x="170" y="470" width="660" height="230" rx="95" fill="#1b2340"/>
+    <rect x="338" y="376" width="148" height="106" rx="34" fill="#dbe7ff"/>
+    <rect x="510" y="376" width="152" height="106" rx="34" fill="#dbe7ff"/>
+    <circle cx="330" cy="700" r="84" fill="#0f1428"/><circle cx="330" cy="700" r="42" fill="#e8e8f0"/>
+    <circle cx="670" cy="700" r="84" fill="#0f1428"/><circle cx="670" cy="700" r="42" fill="#e8e8f0"/>
+  </g>
+</svg>

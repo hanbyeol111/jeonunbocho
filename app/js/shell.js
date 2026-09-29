@@ -1,5 +1,5 @@
 /*
-  앱 껍데기(로그인 / 면책 동의 / 홈 / 프로필) 화면 전환.
+  앱 껍데기(로그인 / 면책 동의 / 홈 / 내 리포트 / 프로필) 화면 전환.
 
   카카오 SDK와 상관없이 바로 돌아야 해서 app.js와 분리했다. app.js와 전역 이름이 겹치지
   않도록 전체를 함수로 감쌌고, localStorage 키 이름만 app.js와 같은 값을 맞춰 쓴다.
@@ -40,6 +40,7 @@
     login: $("login-screen"),
     disclaimer: $("disclaimer-screen"),
     home: $("home-screen"),
+    reports: $("reports-screen"),
     profile: $("profile-screen"),
   };
 
@@ -117,9 +118,35 @@
     return `${d.getMonth() + 1}월 ${d.getDate()}일 ${hh}:${mm}`;
   }
 
+  // 기록 한 줄. 새 기록은 코스 이름/거리/시간, 예전 기록(text만 있음)은 리포트 문구를 보여준다.
+  function buildRecord(entry) {
+    const li = document.createElement("li");
+    li.className = "record";
+
+    const main = document.createElement("div");
+    main.className = "record-main";
+    const title = document.createElement("strong");
+    title.textContent = entry.title || "완주 기록";
+    const date = document.createElement("span");
+    date.className = "record-date";
+    date.textContent = formatDateTime(entry.date);
+    main.appendChild(title);
+    main.appendChild(date);
+    li.appendChild(main);
+
+    const stats = [];
+    if (typeof entry.distanceKm === "number") stats.push(`${entry.distanceKm}km`);
+    if (typeof entry.durationMin === "number") stats.push(`${entry.durationMin}분`);
+    const sub = document.createElement("p");
+    sub.className = "record-sub";
+    sub.textContent = stats.length ? stats.join(" · ") : entry.text || "";
+    li.appendChild(sub);
+    return li;
+  }
+
   function openProfile() {
     const reports = loadReports();
-    // 기록 목록은 최근 20개까지만 보관되므로, 완주 횟수는 별도 카운터를 우선 쓴다.
+    // 기록 목록은 최근 100개까지만 보관되므로, 완주 횟수는 별도 카운터를 우선 쓴다.
     const completed = Number(store.get(KEYS.completed)) || reports.length;
 
     $("profile-nickname").value = getNickname();
@@ -132,23 +159,7 @@
     const list = $("profile-report-list");
     list.innerHTML = "";
     $("profile-report-empty").classList.toggle("hidden", reports.length > 0);
-
-    for (const entry of reports.slice(0, 5)) {
-      const li = document.createElement("li");
-      li.className = "report-history-item";
-
-      const dateEl = document.createElement("span");
-      dateEl.className = "report-history-date";
-      dateEl.textContent = formatDateTime(entry.date);
-
-      const textEl = document.createElement("p");
-      textEl.className = "report-history-text";
-      textEl.textContent = entry.text;
-
-      li.appendChild(dateEl);
-      li.appendChild(textEl);
-      list.appendChild(li);
-    }
+    for (const entry of reports.slice(0, 5)) list.appendChild(buildRecord(entry));
 
     show("profile");
   }
@@ -171,6 +182,59 @@
     if (e.key === "Enter") saveNickname();
   });
   $("profile-disclaimer-btn").addEventListener("click", () => openDisclaimer("review"));
+
+  // ---------- 내 리포트 ----------
+
+  let reportsFilter = "all";
+
+  // 필터에 맞는 기록만 남긴다. 이번 주는 월요일 0시부터, 이번 달은 1일 0시부터.
+  function filterReports(reports, filter) {
+    if (filter === "all") return reports;
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (filter === "week") start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    else start.setDate(1);
+    return reports.filter((r) => new Date(r.date) >= start);
+  }
+
+  function formatTotalTime(min) {
+    if (min < 60) return `${min}분`;
+    return `${Math.floor(min / 60)}시간 ${min % 60}분`;
+  }
+
+  function renderReports() {
+    const list = filterReports(loadReports(), reportsFilter);
+    // 총 주행 시간은 걸린 시간이 기록된 것만 합친다. (예전 기록에는 시간이 없다)
+    const totalMin = list.reduce((sum, r) => sum + (typeof r.durationMin === "number" ? r.durationMin : 0), 0);
+    $("reports-total-time").textContent = formatTotalTime(totalMin);
+    $("reports-total-count").textContent = `(${list.length}회)`;
+
+    const ul = $("reports-list");
+    ul.innerHTML = "";
+    $("reports-empty").classList.toggle("hidden", list.length > 0);
+    for (const entry of list) ul.appendChild(buildRecord(entry));
+  }
+
+  function openReports() {
+    reportsFilter = "all";
+    for (const tab of $("reports-filters").querySelectorAll(".filter-tab")) {
+      tab.classList.toggle("active", tab.dataset.filter === "all");
+    }
+    renderReports();
+    show("reports");
+  }
+
+  $("home-card-reports").addEventListener("click", openReports);
+  $("reports-back-btn").addEventListener("click", () => show("home"));
+  $("reports-filters").addEventListener("click", (e) => {
+    const tab = e.target.closest(".filter-tab");
+    if (!tab) return;
+    reportsFilter = tab.dataset.filter;
+    for (const t of $("reports-filters").querySelectorAll(".filter-tab")) {
+      t.classList.toggle("active", t === tab);
+    }
+    renderReports();
+  });
 
   // ---------- 시작 ----------
 
