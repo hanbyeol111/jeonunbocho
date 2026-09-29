@@ -560,16 +560,19 @@ function saveReportToHistory(text, extra = {}) {
 const startTabPanels = {
   destination: document.getElementById("tab-destination"),
   loop: document.getElementById("tab-loop"),
+  element: document.getElementById("tab-element"),
 };
 // [하단 시트 제목]
 const startPanelTitles = {
   destination: "목적지 검색",
   loop: "순환 코스 설정",
+  element: "연습할 요소 선택",
 };
 // 상단 바 가운데 제목
 const mapHeaderTitles = {
   destination: "목적지 지정",
   loop: "순환코스",
+  element: "특정 요소",
 };
 const startPanelTitle = document.getElementById("start-panel-title");
 const mapTitle = document.getElementById("map-title");
@@ -580,7 +583,7 @@ const destinationResults = document.getElementById("destination-results");
 const destinationSearchEmpty = document.getElementById("destination-search-empty");
 const myLocationLabel = document.getElementById("my-location-label");
 
-/** name: "destination" | "loop" - 지도 화면 하단 시트에 그 패널만 보이게 하고, 상단 바 제목도 맞춘다. */
+/** name: "destination" | "loop" | "element" - 지도 화면 하단 시트에 그 패널만 보이게 하고, 상단 바 제목도 맞춘다. */
 function showStartPanel(name) {
   Object.values(startTabPanels).forEach((panel) => panel.classList.add("hidden"));
   startTabPanels[name].classList.remove("hidden");
@@ -1108,7 +1111,130 @@ document.getElementById("header-locate-btn").addEventListener("click", async () 
   }
 });
 
-// "특정 요소" 카드는 아직 기능이 없어서(기획서 Phase 3, 자체 라우팅 필요) 비활성 상태로만 둔다.
+// ---------- 특정 요소 연습 ----------
+//
+// 기획서의 "원하는 요소가 포함된 경로 추천"은 원래 자체 라우팅 엔진이 필요한 어려운 기능이다.
+// 그래서 v1은 이렇게 근사한다: 순환 코스 후보를 여러 방향으로 한꺼번에 만들어 보고,
+// 안내 문구(guidance)에 고른 요소가 몇 번 나오는지 세서 많이 포함된 순서대로 추천한다.
+// 그래서 "이 요소가 정확히 N번 나오는 코스를 만든다"가 아니라 "후보 중 가장 많은 코스를 고른다"이다.
+
+const ELEMENT_COURSE_KM = 5; // 후보 코스의 목표 거리
+const ELEMENT_CANDIDATES = 6; // 방향을 60도씩 벌려서 만들어 볼 후보 수
+const ELEMENT_TOP = 3; // 화면에 보여줄 추천 개수
+
+const elementChips = document.getElementById("element-chips");
+const elementSearchBtn = document.getElementById("element-search-btn");
+const elementResults = document.getElementById("element-results");
+let selectedElement = "유턴";
+
+elementChips.addEventListener("click", (e) => {
+  const chip = e.target.closest(".element-chip");
+  if (!chip || chip.disabled) return;
+  elementChips.querySelectorAll(".element-chip").forEach((c) => c.classList.remove("selected"));
+  chip.classList.add("selected");
+  selectedElement = chip.dataset.keyword;
+});
+
+document.getElementById("home-card-element").addEventListener("click", () => {
+  enterMapScreen();
+  showStartPanel("element");
+});
+
+/** 추천 후보 하나를 지도에 그리고 코스 안내(브리핑)를 띄운다. */
+function showElementCandidate(cand, keyword) {
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+  cautionBanner.classList.add("hidden");
+  reportPanel.classList.add("hidden");
+  exitNavMode();
+
+  const { route, rawPath } = drawRoute(cand.routeData);
+  pendingOrigin = cand.origin;
+  pendingArrivalPoint = cand.origin; // 순환 코스라서 출발지로 돌아오면 완주
+  pendingTitle = `${keyword} 연습 코스`;
+  pendingDirectionLabel = DIRECTION_NAMES[cand.bearing] ?? "지정";
+  pendingGuides = applyRouteToBriefing(route, rawPath, ELEMENT_COURSE_KM);
+  statusMsg.textContent = `${keyword} ${cand.count}회가 들어간 코스예요. 아래에서 확인하고 시작해보세요.`;
+  briefingPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function searchElementCourses() {
+  const keyword = selectedElement;
+  elementSearchBtn.disabled = true;
+  elementResults.innerHTML = "";
+  briefingPanel.classList.add("hidden");
+  statusMsg.textContent = "현재 위치를 확인하는 중...";
+
+  try {
+    const origin = await getCurrentLocation();
+    currentPosition = origin;
+    initMap(origin.lat, origin.lng);
+
+    statusMsg.textContent = `${keyword}가 들어간 코스를 찾는 중... (후보 ${ELEMENT_CANDIDATES}개를 비교해요)`;
+    const startBearing = Math.floor(Math.random() * 8) * 45; // 8방위 중 하나에서 시작해 60도씩 돌린다
+    const settled = await Promise.allSettled(
+      Array.from({ length: ELEMENT_CANDIDATES }, async (_, i) => {
+        const bearing = (startBearing + i * 45 * (8 / ELEMENT_CANDIDATES)) % 360;
+        const waypoint = calculateWaypoint(origin.lat, origin.lng, ELEMENT_COURSE_KM / 2, bearing);
+        const routeData = await requestRoute(origin, { waypoint });
+        const route = routeData.routes?.[0];
+        if (!route || route.result_code !== 0) throw new Error("경로 없음");
+        const guides = (route.sections ?? []).flatMap((s) => s.guides ?? []);
+        return {
+          routeData,
+          origin,
+          // DIRECTION_NAMES는 45도 단위라서, 가장 가까운 8방위로 맞춰 이름을 붙인다
+          bearing: (Math.round(bearing / 45) * 45) % 360,
+          count: countGuidesByKeyword(guides, keyword),
+          distanceKm: Number(((route.summary?.distance ?? 0) / 1000).toFixed(1)),
+          durationMin: route.summary?.duration ? Math.round(route.summary.duration / 60) : null,
+        };
+      })
+    );
+
+    const candidates = settled.filter((r) => r.status === "fulfilled").map((r) => r.value);
+    if (candidates.length === 0) {
+      throw new Error("코스를 만들지 못했어요. 잠시 뒤에 다시 시도해주세요.");
+    }
+
+    const good = candidates
+      .filter((c) => c.count > 0)
+      .sort((a, b) => b.count - a.count || (a.durationMin ?? 0) - (b.durationMin ?? 0))
+      .slice(0, ELEMENT_TOP);
+
+    if (good.length === 0) {
+      statusMsg.textContent = `이 근처에서는 ${keyword}가 들어간 코스를 찾지 못했어요. 다른 요소를 골라보세요.`;
+      return;
+    }
+
+    for (const cand of good) {
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "element-result-item";
+      btn.innerHTML = `<strong>${keyword} ${cand.count}회</strong><span>${cand.distanceKm}km${
+        cand.durationMin != null ? ` · 약 ${cand.durationMin}분` : ""
+      } · ${DIRECTION_NAMES[cand.bearing]}쪽</span>`;
+      btn.addEventListener("click", () => {
+        elementResults.querySelectorAll(".element-result-item").forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        showElementCandidate(cand, keyword);
+      });
+      li.appendChild(btn);
+      elementResults.appendChild(li);
+    }
+    statusMsg.textContent = "마음에 드는 코스를 눌러 확인해보세요.";
+    elementResults.querySelector(".element-result-item").click(); // 가장 많이 든 코스를 먼저 보여준다
+  } catch (err) {
+    statusMsg.textContent = `오류: ${err.message}`;
+  } finally {
+    elementSearchBtn.disabled = false;
+  }
+}
+
+elementSearchBtn.addEventListener("click", searchElementCourses);
 
 document.getElementById("recommend-start-btn").addEventListener("click", () => {
   enterMapScreen();

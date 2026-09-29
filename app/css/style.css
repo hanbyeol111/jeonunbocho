@@ -494,6 +494,79 @@ select {
   text-align: center;
 }
 
+/* ---------- 특정 요소 (연습할 요소 고르기 + 추천 코스 후보) ---------- */
+
+.element-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.element-chip {
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #666;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.element-chip.selected {
+  color: var(--brand-text);
+  background: var(--brand);
+  border-color: var(--brand-border);
+}
+
+.element-chip:disabled {
+  color: #b5b5b5;
+  cursor: default;
+}
+
+.element-chip small {
+  margin-left: 2px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.element-results {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.element-result-item {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  text-align: left;
+  background: #f7f7f8;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.element-result-item.selected {
+  border-color: var(--brand-border);
+  background: #fffdf0;
+}
+
+.element-result-item strong {
+  font-size: 15px;
+  color: var(--navy);
+}
+
+.element-result-item span {
+  font-size: 12px;
+  color: #888;
+}
+
 /* ---------- 목적지 검색 ---------- */
 
 .my-location-label {
