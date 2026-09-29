@@ -490,39 +490,7 @@ select {
 }
 
 
-/* ---------- 시작 화면 탭 (목적지 지정 / 순환코스 / 내 리포트 보기) ---------- */
-
-.start-tabs {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 16px;
-  padding: 4px;
-  background: #f2f3f5;
-  border-radius: 10px;
-}
-
-.start-tab {
-  flex: 1;
-  padding: 10px 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #888;
-  background: none;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.start-tab.active {
-  color: var(--brand-text);
-  background: white;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
-}
-
-.start-tab-panel.hidden {
-  display: none;
-}
+/* ---------- 시작 패널 (목적지 지정 / 순환코스 / 내 리포트 - 홈 카드가 고른 하나만 보인다) ---------- */
 
 .tab-placeholder {
   margin: 12px 0;

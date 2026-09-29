@@ -586,12 +586,18 @@ function renderReportHistory() {
   }
 }
 
-const startTabs = document.querySelectorAll(".start-tab");
+// 홈 카드가 이미 무엇을 할지 골랐으므로, 지도 화면에서는 탭 없이 고른 패널 하나만 보여준다.
 const startTabPanels = {
   destination: document.getElementById("tab-destination"),
   loop: document.getElementById("tab-loop"),
   reports: document.getElementById("tab-reports"),
 };
+const startPanelTitles = {
+  destination: "목적지 지정",
+  loop: "순환코스",
+  reports: "내 리포트",
+};
+const startPanelTitle = document.getElementById("start-panel-title");
 const reportHistoryList = document.getElementById("report-history-list");
 const reportHistoryEmpty = document.getElementById("report-history-empty");
 
@@ -601,23 +607,16 @@ const destinationResults = document.getElementById("destination-results");
 const destinationSearchEmpty = document.getElementById("destination-search-empty");
 const myLocationLabel = document.getElementById("my-location-label");
 
-startTabs.forEach((tab) => {
-  tab.addEventListener("click", () => {
-    startTabs.forEach((t) => {
-      t.classList.remove("active");
-      t.setAttribute("aria-selected", "false");
-    });
-    tab.classList.add("active");
-    tab.setAttribute("aria-selected", "true");
+/** name: "destination" | "loop" | "reports" - 지도 화면 하단 시트에 그 패널만 보이게 한다. */
+function showStartPanel(name) {
+  Object.values(startTabPanels).forEach((panel) => panel.classList.add("hidden"));
+  startTabPanels[name].classList.remove("hidden");
+  startPanelTitle.textContent = startPanelTitles[name];
 
-    Object.values(startTabPanels).forEach((panel) => panel.classList.add("hidden"));
-    startTabPanels[tab.dataset.tab].classList.remove("hidden");
-
-    if (tab.dataset.tab === "reports") {
-      renderReportHistory();
-    }
-  });
-});
+  if (name === "reports") {
+    renderReportHistory();
+  }
+}
 
 // ---------- 화면 흐름 연결 ----------
 
@@ -1103,24 +1102,24 @@ backToHomeBtn.addEventListener("click", enterHomeScreen);
 
 document.getElementById("home-card-destination").addEventListener("click", () => {
   enterMapScreen();
-  document.querySelector('.start-tab[data-tab="destination"]').click();
+  showStartPanel("destination");
 });
 
 document.getElementById("home-card-loop").addEventListener("click", () => {
   enterMapScreen();
-  document.querySelector('.start-tab[data-tab="loop"]').click();
+  showStartPanel("loop");
 });
 
 document.getElementById("home-card-reports").addEventListener("click", () => {
   enterMapScreen();
-  document.querySelector('.start-tab[data-tab="reports"]').click();
+  showStartPanel("reports");
 });
 
 // "특정 요소" 카드는 아직 기능이 없어서(기획서 Phase 3, 자체 라우팅 필요) 비활성 상태로만 둔다.
 
 document.getElementById("recommend-start-btn").addEventListener("click", () => {
   enterMapScreen();
-  document.querySelector('.start-tab[data-tab="loop"]').click();
+  showStartPanel("loop");
   previewCourse(5.0, undefined); // 추천 코스: 5km, 무작위 방향
 });
 

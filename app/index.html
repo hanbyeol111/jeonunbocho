@@ -180,13 +180,9 @@
   <div id="bottom-sheet" class="bottom-sheet">
     <div class="sheet-handle"></div>
 
-    <!-- 코스 시작 전: 목적지 지정 / 순환코스 / 내 리포트 보기 3개 탭으로 나뉜다 -->
+    <!-- 코스 시작 전: 홈에서 고른 것(목적지 지정 / 순환코스 / 내 리포트)의 패널 하나만 보인다. 탭 없음. -->
     <section id="setup-panel" class="sheet-section">
-      <div id="start-tabs" class="start-tabs" role="tablist">
-        <button type="button" class="start-tab" data-tab="destination" role="tab" aria-selected="false">목적지 지정</button>
-        <button type="button" class="start-tab active" data-tab="loop" role="tab" aria-selected="true">순환코스</button>
-        <button type="button" class="start-tab" data-tab="reports" role="tab" aria-selected="false">내 리포트 보기</button>
-      </div>
+      <h2 id="start-panel-title"></h2>
 
       <!-- 목적지 지정: 장소를 검색해서 골라 편도 경로를 만든다 -->
       <div id="tab-destination" class="start-tab-panel hidden">
