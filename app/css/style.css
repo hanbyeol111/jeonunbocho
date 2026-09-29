@@ -610,7 +610,7 @@ select {
   position: fixed;
   inset: 0;
   overflow-y: auto;
-  background: #fafafa;
+  background: #ffffff;
   padding: 28px 20px 40px;
 }
 
@@ -773,7 +773,7 @@ select {
   position: fixed;
   inset: 0;
   overflow-y: auto;
-  background: #fafafa;
+  background: #ffffff;
   padding: 40px 24px 32px;
 }
 
@@ -901,7 +901,7 @@ select {
   position: fixed;
   inset: 0;
   overflow-y: auto;
-  background: #fafafa;
+  background: #ffffff;
   padding: 20px 20px 40px;
 }
 
