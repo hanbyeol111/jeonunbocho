@@ -584,8 +584,39 @@ const destinationSearchEmpty = document.getElementById("destination-search-empty
 // 목적지 지정 탭과 특정 요소 탭 둘 다 "내 위치: ..." 줄이 있어서 같은 클래스로 한꺼번에 갱신한다.
 const myLocationLabels = document.querySelectorAll(".my-location-label");
 
+/**
+ * 앞서 만들던 코스의 흔적(지도 위 경로, 코스 안내, 검색/추천 목록, 안내 문구)을 전부 지운다.
+ * 목적지 지정으로 경로를 만들었다가 마음이 바뀌어 순환코스 등 다른 패널로 넘어갔을 때,
+ * 이전 경로가 남아 새 코스와 헷갈리지 않게 하려고 패널을 바꿀 때마다 부른다.
+ */
+function resetCourseState() {
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+  currentPolylines.forEach((pl) => pl.setMap(null));
+  currentPolylines = [];
+
+  pendingOrigin = null;
+  pendingGuides = null;
+  pendingArrivalPoint = null;
+  pendingSummary = null;
+
+  cautionBanner.classList.add("hidden");
+  reportPanel.classList.add("hidden");
+  briefingPanel.classList.add("hidden");
+  exitNavMode();
+
+  destinationResults.innerHTML = "";
+  destinationSearchEmpty.classList.add("hidden");
+  destinationSearchInput.value = "";
+  elementResults.innerHTML = "";
+  statusMsg.textContent = "";
+}
+
 /** name: "destination" | "loop" | "element" - 지도 화면 하단 시트에 그 패널만 보이게 하고, 상단 바 제목도 맞춘다. */
 function showStartPanel(name) {
+  resetCourseState();
   Object.values(startTabPanels).forEach((panel) => panel.classList.add("hidden"));
   startTabPanels[name].classList.remove("hidden");
   startPanelTitle.textContent = startPanelTitles[name];
@@ -1079,6 +1110,7 @@ function enterMapScreen() {
 }
 
 function enterHomeScreen() {
+  resetCourseState();
   mapScreen.classList.add("hidden");
   homeScreen.classList.remove("hidden");
 }

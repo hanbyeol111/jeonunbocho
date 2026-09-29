@@ -11,7 +11,7 @@
   대체된다 - PWA 오프라인 지원은 유지하면서 이 문제를 근본적으로 없앤다.
 */
 
-const CACHE_NAME = "jeonunbocho-shell-v8";
+const CACHE_NAME = "jeonunbocho-shell-v9";
 const APP_SHELL = [
   "./",
   "./index.html",
