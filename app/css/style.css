@@ -4,10 +4,6 @@
   --brand-text: #4a3c00; /* 노란 배경 위에서 흰 글씨보다 대비가 잘 나오는 어두운 색 */
   --navy: #1b2340; /* 홈 화면 보조색 - 제목/아이콘/배지에 쓴다 */
   --navy-soft: #eef0f7; /* 네이비를 옅게 깐 배경 (카드 등) */
-  --bg: #ffffff; /* 화면 배경: 완전 흰색 */
-  --card: #fffbe6; /* 카드·박스 배경: 브랜드 노란색을 아주 옅게 깐 색 (회색 대신) */
-  --card-border: #f0e6a0;
-  --card-muted: #f4efd2; /* "준비 중" 같은 작은 알약 배경 */
 }
 
 * {
@@ -268,15 +264,15 @@ select {
   font-size: 12px;
   line-height: 1.4;
   color: #333;
-  background: var(--card);
-  border: 2px solid var(--card-border);
+  background: #f2f3f5;
+  border: 2px solid transparent;
   border-radius: 10px;
   cursor: pointer;
 }
 
 .dir-btn.selected {
   border-color: var(--brand-border);
-  background: var(--brand);
+  background: #fff9d6;
   color: var(--brand-text);
   font-weight: 700;
 }
@@ -287,9 +283,8 @@ select {
   height: 130px;
   margin-bottom: 12px;
   border-radius: 12px;
-  background: var(--card);
+  background: #f2f3f5;
   overflow: hidden;
-  border: 1px solid var(--card-border);
 }
 
 .route-thumb svg {
@@ -316,9 +311,8 @@ select {
   flex-direction: column;
   gap: 4px;
   padding: 10px 12px;
-  background: var(--card);
+  background: #f7f7f8;
   border-radius: 10px;
-  border: 1px solid var(--card-border);
 }
 
 .stat-label {
@@ -472,7 +466,7 @@ select {
   height: 34px;
   border-radius: 50%;
   border: none;
-  background: var(--card);
+  background: #f2f3f5;
   color: #555;
   font-size: 14px;
   cursor: pointer;
@@ -516,9 +510,8 @@ select {
 .report-history-item {
   padding: 12px 14px;
   margin-bottom: 8px;
-  background: var(--card);
+  background: #f7f7f8;
   border-radius: 10px;
-  border: 1px solid var(--card-border);
 }
 
 .report-history-item:last-child {
@@ -546,9 +539,8 @@ select {
   font-size: 13px;
   font-weight: 600;
   color: var(--navy);
-  background: var(--card);
+  background: var(--navy-soft);
   border-radius: 8px;
-  border: 1px solid var(--card-border);
 }
 
 .destination-search-row {
@@ -588,8 +580,8 @@ select {
   padding: 12px 14px;
   margin-bottom: 8px;
   text-align: left;
-  background: var(--card);
-  border: 1px solid var(--card-border);
+  background: #f7f7f8;
+  border: none;
   border-radius: 10px;
   cursor: pointer;
 }
@@ -618,7 +610,7 @@ select {
   position: fixed;
   inset: 0;
   overflow-y: auto;
-  background: var(--bg);
+  background: #fafafa;
   padding: 28px 20px 40px;
 }
 
@@ -657,8 +649,8 @@ select {
   gap: 6px;
   padding: 16px;
   text-align: left;
-  background: var(--card);
-  border: 1px solid var(--card-border);
+  background: white;
+  border: 1px solid #eee;
   border-radius: 14px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   cursor: pointer;
@@ -703,7 +695,7 @@ select {
   font-size: 11px;
   font-weight: 700;
   color: #888;
-  background: var(--card-muted);
+  background: #f0f0f0;
   border-radius: 999px;
 }
 
@@ -716,8 +708,8 @@ select {
 
 .recommend-card {
   padding: 18px;
-  background: var(--card);
-  border: 1px solid var(--card-border);
+  background: white;
+  border: 1px solid #eee;
   border-radius: 14px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
@@ -772,7 +764,7 @@ select {
   font-size: 11px;
   font-weight: 700;
   color: #888;
-  background: var(--card-muted);
+  background: #f0f0f0;
   border-radius: 999px;
 }
 
@@ -781,7 +773,7 @@ select {
   position: fixed;
   inset: 0;
   overflow-y: auto;
-  background: var(--bg);
+  background: #fafafa;
   padding: 40px 24px 32px;
 }
 
@@ -843,8 +835,8 @@ select {
   font-size: 15px;
   font-weight: 600;
   color: #999;
-  background: var(--card);
-  border: 1px solid var(--card-border);
+  background: white;
+  border: 1px solid #e5e5e5;
   border-radius: 10px;
   cursor: not-allowed;
 }
@@ -909,7 +901,7 @@ select {
   position: fixed;
   inset: 0;
   overflow-y: auto;
-  background: var(--bg);
+  background: #fafafa;
   padding: 20px 20px 40px;
 }
 
@@ -935,8 +927,8 @@ select {
   margin-bottom: 14px;
   padding: 24px 18px 18px;
   text-align: center;
-  background: var(--card);
-  border: 1px solid var(--card-border);
+  background: white;
+  border: 1px solid #eee;
   border-radius: 14px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
