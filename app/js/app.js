@@ -566,14 +566,13 @@ const startPanelTitles = {
   destination: "목적지 검색",
   loop: "순환 코스 설정",
 };
-// [상단 바 가운데 제목, 그 아래 안내 문구]
-const mapHeaderTexts = {
-  destination: ["목적지 지정", "원하는 목적지를 검색해보세요!"],
-  loop: ["순환코스", "거리와 방향을 정해 한 바퀴 돌아봐요"],
+// 상단 바 가운데 제목
+const mapHeaderTitles = {
+  destination: "목적지 지정",
+  loop: "순환코스",
 };
 const startPanelTitle = document.getElementById("start-panel-title");
 const mapTitle = document.getElementById("map-title");
-const mapSubtitle = document.getElementById("map-subtitle");
 
 const destinationSearchInput = document.getElementById("destination-search-input");
 const destinationSearchBtn = document.getElementById("destination-search-btn");
@@ -586,7 +585,7 @@ function showStartPanel(name) {
   Object.values(startTabPanels).forEach((panel) => panel.classList.add("hidden"));
   startTabPanels[name].classList.remove("hidden");
   startPanelTitle.textContent = startPanelTitles[name];
-  [mapTitle.textContent, mapSubtitle.textContent] = mapHeaderTexts[name];
+  mapTitle.textContent = mapHeaderTitles[name];
 }
 
 // ---------- 화면 흐름 연결 ----------
