@@ -581,7 +581,8 @@ const destinationSearchInput = document.getElementById("destination-search-input
 const destinationSearchBtn = document.getElementById("destination-search-btn");
 const destinationResults = document.getElementById("destination-results");
 const destinationSearchEmpty = document.getElementById("destination-search-empty");
-const myLocationLabel = document.getElementById("my-location-label");
+// 목적지 지정 탭과 특정 요소 탭 둘 다 "내 위치: ..." 줄이 있어서 같은 클래스로 한꺼번에 갱신한다.
+const myLocationLabels = document.querySelectorAll(".my-location-label");
 
 /** name: "destination" | "loop" | "element" - 지도 화면 하단 시트에 그 패널만 보이게 하고, 상단 바 제목도 맞춘다. */
 function showStartPanel(name) {
@@ -893,27 +894,25 @@ function getGeocoderService() {
 }
 
 /**
- * "목적지 지정" 탭 위에 "내 위치: OOO"를 보여준다. 지도가 조용히 재중심되는 것만으로는
+ * "목적지 지정"/"특정 요소" 탭 위에 "내 위치: OOO"를 보여준다. 지도가 조용히 재중심되는 것만으로는
  * 위치를 확인했는지 눈에 잘 안 띄어서, 실제 주소로 변환해 명시적으로 보여준다.
  * @param {{lat:number,lng:number}|null} pos null이면 "확인 중/실패" 상태를 보여준다.
  * @param {boolean} failed pos가 null인데 이게 true면 "권한 필요" 메시지를, false면 "확인 중"을 보여준다.
  */
 function updateMyLocationLabel(pos, failed = false) {
-  if (!myLocationLabel) return;
+  const setLabel = (text) => myLocationLabels.forEach((el) => (el.textContent = text));
 
   if (!pos) {
-    myLocationLabel.textContent = failed
-      ? "내 위치: 확인 안 됨 (위치 권한을 허용해주세요)"
-      : "내 위치 확인 중...";
+    setLabel(failed ? "내 위치: 확인 안 됨 (위치 권한을 허용해주세요)" : "내 위치 확인 중...");
     return;
   }
 
   getGeocoderService().coord2Address(pos.lng, pos.lat, (result, status) => {
     if (status === kakao.maps.services.Status.OK && result[0]) {
       const addr = result[0].road_address?.address_name || result[0].address?.address_name;
-      myLocationLabel.textContent = `내 위치: ${addr || `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`}`;
+      setLabel(`내 위치: ${addr || `${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`}`);
     } else {
-      myLocationLabel.textContent = `내 위치: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`;
+      setLabel(`내 위치: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`);
     }
   });
 }
@@ -1121,6 +1120,7 @@ document.getElementById("header-locate-btn").addEventListener("click", async () 
 const ELEMENT_COURSE_KM = 5; // 후보 코스의 목표 거리
 const ELEMENT_CANDIDATES = 6; // 방향을 60도씩 벌려서 만들어 볼 후보 수
 const ELEMENT_TOP = 3; // 화면에 보여줄 추천 개수
+const RETURN_TOLERANCE_M = 150; // 코스 끝이 출발지에서 이만큼 안이어야 "제자리로 돌아온다"고 본다
 
 const elementChips = document.getElementById("element-chips");
 const elementSearchBtn = document.getElementById("element-search-btn");
@@ -1182,9 +1182,11 @@ async function searchElementCourses() {
         const route = routeData.routes?.[0];
         if (!route || route.result_code !== 0) throw new Error("경로 없음");
         const guides = (route.sections ?? []).flatMap((s) => s.guides ?? []);
+        const lastGuide = guides[guides.length - 1];
         return {
           routeData,
           origin,
+          endGapM: lastGuide ? distanceMeters(origin.lat, origin.lng, lastGuide.y, lastGuide.x) : Infinity,
           // DIRECTION_NAMES는 45도 단위라서, 가장 가까운 8방위로 맞춰 이름을 붙인다
           bearing: (Math.round(bearing / 45) * 45) % 360,
           count: countGuidesByKeyword(guides, keyword),
@@ -1194,7 +1196,12 @@ async function searchElementCourses() {
       })
     );
 
-    const candidates = settled.filter((r) => r.status === "fulfilled").map((r) => r.value);
+    // 특정 요소 코스는 반드시 출발한 곳으로 돌아와야 한다. 경로의 마지막 지점(목적지 안내)이
+    // 출발지에서 멀면(도로 사정으로 다른 곳에 내려주는 경우 등) 후보에서 뺀다.
+    const candidates = settled
+      .filter((r) => r.status === "fulfilled")
+      .map((r) => r.value)
+      .filter((c) => c.endGapM <= RETURN_TOLERANCE_M);
     if (candidates.length === 0) {
       throw new Error("코스를 만들지 못했어요. 잠시 뒤에 다시 시도해주세요.");
     }
@@ -1205,7 +1212,7 @@ async function searchElementCourses() {
       .slice(0, ELEMENT_TOP);
 
     if (good.length === 0) {
-      statusMsg.textContent = `이 근처에서는 ${keyword}가 들어간 코스를 찾지 못했어요. 다른 요소를 골라보세요.`;
+      statusMsg.textContent = `이 근처에서는 출발지로 돌아오면서 ${keyword}가 들어간 코스를 찾지 못했어요. 다른 요소를 골라보세요.`;
       return;
     }
 

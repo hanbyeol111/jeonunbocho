@@ -107,9 +107,9 @@
       </button>
 
       <button id="home-card-element" type="button" class="home-card">
-        <svg class="ic home-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="3.2"/><path d="M4 20c0-3.5 2.7-6 6-6s6 2.5 6 6M18 5v6M15 8h6"/></svg>
+        <svg class="ic home-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20V10a5 5 0 0110 0v9"/><path d="M13.5 15.5L17 19l3.5-3.5"/></svg>
         <span class="home-card-title">특정 요소</span>
-        <span class="home-card-subtitle">유턴 · 회전교차로 연습</span>
+        <span class="home-card-subtitle">유턴 · 회전교차로</span>
         <span class="home-card-chevron" aria-hidden="true">›</span>
       </button>
 
@@ -247,6 +247,8 @@
 
       <!-- 특정 요소: 연습하고 싶은 요소를 고르면, 그 요소가 많이 들어간 순환 코스 후보를 추려 보여준다 -->
       <div id="tab-element" class="start-tab-panel hidden">
+        <p class="my-location-label">내 위치 확인 중...</p>
+        <p class="element-note">출발한 곳으로 다시 돌아오는 순환 코스만 추천해요.</p>
         <div id="element-chips" class="element-chips">
           <button type="button" class="element-chip selected" data-keyword="유턴">유턴</button>
           <button type="button" class="element-chip" data-keyword="회전교차로">회전교차로</button>
