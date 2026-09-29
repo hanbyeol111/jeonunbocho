@@ -13,10 +13,74 @@
 </head>
 <body>
 
-  <!-- 첫 화면: 지도 없이 뜨는 홈 화면. 여기서 카드를 골라야 지도 화면(#map-screen)으로 넘어간다. -->
-  <div id="home-screen" class="home-screen">
+  <!--
+    앱 껍데기 화면들(로그인 / 면책 동의 / 홈 / 프로필)은 js/shell.js가 localStorage를 보고
+    처음에 어느 것을 보여줄지 정한다. 전부 hidden으로 시작해서, 잘못된 화면이 잠깐 비치는 걸 막는다.
+  -->
+
+  <!-- 1) 로그인 화면: 지금은 껍데기만. 소셜 로그인 버튼은 비활성이고 "둘러보기"만 동작한다. -->
+  <div id="login-screen" class="auth-screen hidden">
+    <div class="auth-inner">
+      <img class="auth-logo" src="icons/icon-192.png" alt="" width="88" height="88" />
+      <h1 class="auth-title">전운보초</h1>
+      <p class="auth-tagline">면허 딴 직후, 진짜 도로 감각을<br />익히는 연습 앱</p>
+
+      <div class="auth-buttons">
+        <button type="button" class="auth-provider" disabled>
+          <span>카카오로 시작하기</span><span class="pill-soon">준비 중</span>
+        </button>
+        <button type="button" class="auth-provider" disabled>
+          <span>네이버로 시작하기</span><span class="pill-soon">준비 중</span>
+        </button>
+        <button type="button" class="auth-provider" disabled>
+          <span>Google로 시작하기</span><span class="pill-soon">준비 중</span>
+        </button>
+      </div>
+
+      <button id="guest-start-btn" type="button" class="primary-btn">로그인 없이 둘러보기</button>
+      <p class="auth-note">로그인은 추후 지원할 예정이에요.<br />지금은 기록이 이 기기에만 저장돼요.</p>
+    </div>
+  </div>
+
+  <!-- 2) 면책 동의 화면: 처음 한 번, 동의해야 홈으로 넘어간다. 프로필에서 다시 볼 때는 동의 체크가 빠진다. -->
+  <div id="disclaimer-screen" class="auth-screen hidden">
+    <div class="auth-inner auth-inner-left">
+      <h1 class="auth-title-sm">시작하기 전에 읽어주세요</h1>
+
+      <ol class="disclaimer-list">
+        <li>
+          <strong>운전 중에는 화면을 조작하지 마세요</strong>
+          <p>코스 설정과 확인은 반드시 정차한 상태에서 하세요. 주행 중에는 음성과 큰 안내만 참고하세요.</p>
+        </li>
+        <li>
+          <strong>안내는 참고용이에요</strong>
+          <p>실제 도로 상황, 교통 신호, 표지판과 법규가 항상 우선입니다. 앱 안내에 따른 운전의 책임은 운전자에게 있어요.</p>
+        </li>
+        <li>
+          <strong>면허 취득 후 연습용이에요</strong>
+          <p>운전면허시험장의 도로주행시험 코스를 준비하는 앱이 아닙니다.</p>
+        </li>
+        <li>
+          <strong>위치 정보는 이렇게 다뤄요</strong>
+          <p>경로를 만들 때 현재 위치가 경로 계산을 위해 지도·길찾기 서비스로 전송됩니다. 앱은 GPS 좌표를 저장하지 않고, 이 기기에는 완주 기록(날짜와 요약 문구)만 남아요.</p>
+        </li>
+      </ol>
+
+      <label id="disclaimer-check-row" class="disclaimer-check">
+        <input id="disclaimer-check" type="checkbox" />
+        <span>위 내용을 모두 확인했습니다</span>
+      </label>
+      <button id="disclaimer-confirm-btn" type="button" class="primary-btn" disabled>동의하고 시작하기</button>
+    </div>
+  </div>
+
+  <!-- 3) 홈 화면 (= 메인 화면): 지도 없이 뜨는 화면. 여기서 카드를 골라야 지도 화면(#map-screen)으로 넘어간다. -->
+  <div id="home-screen" class="home-screen hidden">
     <header class="home-header">
       <h1>오늘의 연습</h1>
+      <button id="home-profile-btn" type="button" class="home-profile-btn" aria-label="내 프로필">
+        <span id="home-profile-initial">게</span>
+      </button>
     </header>
 
     <p class="home-greeting">안녕하세요!</p>
@@ -58,6 +122,43 @@
       <p class="recommend-stats">5.0km · 약 20분 · 무작위 방향</p>
       <button id="recommend-start-btn" type="button" class="primary-btn">시작하기</button>
     </div>
+  </div>
+
+  <!-- 4) 프로필 화면: 계정 없이 이 기기에만 저장되는 프로필. 로그인은 추후. -->
+  <div id="profile-screen" class="profile-screen hidden">
+    <header class="profile-header">
+      <button id="profile-back-btn" type="button" class="back-to-home-btn" aria-label="홈으로">←</button>
+      <h1>내 프로필</h1>
+    </header>
+
+    <div class="profile-card">
+      <div id="profile-avatar" class="profile-avatar">게</div>
+      <div class="profile-name-row">
+        <input id="profile-nickname" class="profile-nickname" type="text" maxlength="12" placeholder="닉네임" />
+        <button id="profile-save-btn" type="button" class="profile-save-btn">저장</button>
+      </div>
+      <p class="profile-status">게스트 · 이 기기에만 저장돼요</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <span class="stat-label">완주한 코스</span>
+        <span id="profile-completed" class="stat-value">0회</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-label">시작한 날</span>
+        <span id="profile-first-used" class="stat-value">-</span>
+      </div>
+    </div>
+
+    <h2 class="home-section-title">최근 기록</h2>
+    <ul id="profile-report-list" class="report-history-list"></ul>
+    <p id="profile-report-empty" class="tab-placeholder">아직 완주한 코스가 없어요.</p>
+
+    <button type="button" class="auth-provider profile-login-btn" disabled>
+      <span>로그인하기</span><span class="pill-soon">준비 중</span>
+    </button>
+    <button id="profile-disclaimer-btn" type="button" class="secondary-btn">안내 및 면책 조항 다시 보기</button>
   </div>
 
   <!-- 지도 화면: 홈 화면에서 카드를 고르기 전까지는 숨겨져 있다. -->
@@ -218,6 +319,9 @@
     <button id="dialog-start-btn" type="button" class="primary-btn">경로 만들기</button>
     <button id="dialog-cancel-btn" type="button" class="secondary-btn">취소</button>
   </dialog>
+
+  <!-- 로그인/면책/홈/프로필 전환. 카카오 SDK 로딩과 무관하게 바로 돌아야 해서 따로 먼저 불러온다. -->
+  <script src="js/shell.js"></script>
 
   <!--
     카카오맵 JavaScript 키를 아래 KAKAO_APP_KEY 자리에 넣으세요.

@@ -769,3 +769,255 @@ select {
   font-size: 13px;
   color: #888;
 }
+
+/* ---------- 앱 껍데기: 로그인 / 면책 동의 / 프로필 ---------- */
+
+/* 홈 헤더: 제목 왼쪽, 프로필 버튼 오른쪽 */
+.home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.home-profile-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--brand);
+  background: var(--navy);
+  color: var(--brand);
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pill-soon {
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  background: #f0f0f0;
+  border-radius: 999px;
+}
+
+/* 로그인 / 면책 동의 공통 */
+.auth-screen {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  background: #fafafa;
+  padding: 40px 24px 32px;
+}
+
+.auth-screen.hidden {
+  display: none;
+}
+
+.auth-inner {
+  max-width: 420px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.auth-inner-left {
+  text-align: left;
+}
+
+.auth-logo {
+  display: block;
+  margin: 24px auto 16px;
+  border-radius: 22px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.auth-title {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.auth-title-sm {
+  margin: 8px 0 20px;
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.auth-tagline {
+  margin: 0 0 32px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #666;
+}
+
+.auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.auth-provider {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #999;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  cursor: not-allowed;
+}
+
+.auth-note {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #999;
+}
+
+.disclaimer-list {
+  margin: 0 0 20px;
+  padding-left: 20px;
+}
+
+.disclaimer-list li {
+  margin-bottom: 16px;
+}
+
+.disclaimer-list strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 15px;
+  color: var(--navy);
+}
+
+.disclaimer-list p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #555;
+}
+
+.disclaimer-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+  background: #fffbe6;
+  border: 1px solid var(--brand-border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.disclaimer-check.hidden {
+  display: none;
+}
+
+.disclaimer-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--navy);
+}
+
+/* 프로필 */
+.profile-screen {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  background: #fafafa;
+  padding: 20px 20px 40px;
+}
+
+.profile-screen.hidden {
+  display: none;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.profile-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.profile-card {
+  margin-bottom: 14px;
+  padding: 24px 18px 18px;
+  text-align: center;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 14px;
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--brand);
+  background: var(--navy);
+  border: 3px solid var(--brand);
+  border-radius: 50%;
+}
+
+.profile-name-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.profile-nickname {
+  width: 160px;
+  padding: 9px 12px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--navy);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.profile-save-btn {
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--brand-text);
+  background: var(--brand);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.profile-status {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #999;
+}
+
+.profile-screen .home-section-title {
+  margin-top: 22px;
+}
+
+.profile-login-btn {
+  margin-top: 22px;
+}

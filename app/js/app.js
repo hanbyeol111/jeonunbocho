@@ -540,11 +540,19 @@ function loadReportHistory() {
   }
 }
 
+// 기록 목록은 20개까지만 남기므로, 프로필의 "완주한 코스" 횟수는 이 카운터로 따로 센다.
+// (js/shell.js의 KEYS.completed와 같은 키)
+const COMPLETED_COUNT_KEY = "jeonunbocho_completed_count";
+
 /** 완주할 때마다 리포트 문구를 기록에 추가한다. (최신순, 최대 20개까지만 보관) */
 function saveReportToHistory(text) {
   const history = loadReportHistory();
+  // 카운터가 생기기 전에 쌓인 기록이 있으면 그 개수부터 이어서 센다.
+  const completedBefore = Number(localStorage.getItem(COMPLETED_COUNT_KEY)) || history.length;
+
   history.unshift({ text, date: new Date().toISOString() });
   localStorage.setItem(REPORT_HISTORY_KEY, JSON.stringify(history.slice(0, REPORT_HISTORY_MAX)));
+  localStorage.setItem(COMPLETED_COUNT_KEY, String(completedBefore + 1));
 }
 
 function formatReportDate(iso) {

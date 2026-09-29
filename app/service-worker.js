@@ -11,12 +11,13 @@
   대체된다 - PWA 오프라인 지원은 유지하면서 이 문제를 근본적으로 없앤다.
 */
 
-const CACHE_NAME = "jeonunbocho-shell-v3";
+const CACHE_NAME = "jeonunbocho-shell-v4";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./css/style.css",
   "./js/app.js",
+  "./js/shell.js",
   "./manifest.json",
 ];
 
