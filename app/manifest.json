@@ -4,8 +4,8 @@
   "description": "면허 취득 직후 도로 감각을 익히기 위한 전용 연습 앱",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f5f6f8",
-  "theme_color": "#fee500",
+  "background_color": "#ffffff",
+  "theme_color": "#fff176",
   "icons": [
     {
       "src": "icons/icon-192.png",

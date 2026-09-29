@@ -1,6 +1,6 @@
 :root {
-  --brand: #fee500; /* 카카오 옐로우 톤 - 앱 기본색 */
-  --brand-border: #e6b800;
+  --brand: #fff176; /* 카카오 옐로우 톤 - 앱 기본색 */
+  --brand-border: #f5de62;
   --brand-text: #4a3c00; /* 노란 배경 위에서 흰 글씨보다 대비가 잘 나오는 어두운 색 */
   --navy: #1b2340; /* 홈 화면 보조색 - 제목/아이콘/배지에 쓴다 */
   --navy-soft: #eef0f7; /* 네이비를 옅게 깐 배경 (카드 등) */
@@ -158,8 +158,8 @@ select {
 }
 
 .primary-btn:disabled {
-  background: #f5edb8;
-  color: #a99c4d;
+  background: #fbf6d0;
+  color: #b3a85a;
   cursor: not-allowed;
 }
 
@@ -221,7 +221,7 @@ select {
   height: 44px;
   border-top: 2px solid var(--brand-border);
   border-bottom: 2px solid var(--brand-border);
-  background: #fffbe6;
+  background: #fffdf0;
   pointer-events: none;
   z-index: 0; /* 배경 역할만 - 글씨는 항상 이 위에 보여야 한다 */
 }
@@ -272,7 +272,7 @@ select {
 
 .dir-btn.selected {
   border-color: var(--brand-border);
-  background: #fff9d6;
+  background: #fffce6;
   color: var(--brand-text);
   font-weight: 700;
 }
@@ -329,7 +329,7 @@ select {
 .caution-summary {
   margin-bottom: 14px;
   padding: 12px 14px;
-  background: #fffbe6;
+  background: #fffdf0;
   border: 1px solid var(--brand-border);
   border-radius: 10px;
   font-size: 13px;
@@ -880,7 +880,7 @@ select {
   font-size: 14px;
   font-weight: 600;
   color: var(--navy);
-  background: #fffbe6;
+  background: #fffdf0;
   border: 1px solid var(--brand-border);
   border-radius: 10px;
   cursor: pointer;

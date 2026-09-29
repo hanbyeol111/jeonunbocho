@@ -298,7 +298,7 @@ function buildRouteThumbnailSVG(rawPath) {
   const [ex, ey] = points[points.length - 1];
 
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-    <path d="${d}" fill="none" stroke="#e6b800" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="${d}" fill="none" stroke="#f5de62" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
     <circle cx="${sx}" cy="${sy}" r="5" fill="#4caf50" />
     <circle cx="${ex}" cy="${ey}" r="5" fill="#e53935" />
   </svg>`;
