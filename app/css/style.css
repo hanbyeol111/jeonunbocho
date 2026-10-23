@@ -1445,6 +1445,233 @@ select {
   padding: 20px 16px 0;
 }
 
+/* ---------- 코스 안내: 난이도 칩 + 이 코스의 미션 ---------- */
+
+.briefing-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.briefing-head h2 {
+  margin: 0;
+}
+
+.mission-box {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: var(--navy-soft);
+  border-radius: 10px;
+}
+
+.mission-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.xp-pill {
+  padding: 1px 8px;
+  font-size: 11.5px;
+  color: var(--brand-text);
+  background: var(--brand);
+  border-radius: 999px;
+}
+
+.mission-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.mission-chip {
+  padding: 5px 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--navy);
+  background: white;
+  border-radius: 999px;
+}
+
+/* ---------- 완주 화면: 보상 카드 ---------- */
+
+.reward-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 12px 16px 0;
+  padding: 18px;
+  color: white;
+  background: var(--navy);
+  border-radius: 16px;
+}
+
+.reward-ic {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  color: var(--navy);
+  background: var(--brand);
+  border-radius: 50%;
+}
+
+.reward-ic svg {
+  width: 28px;
+  height: 28px;
+}
+
+.reward-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.reward-kicker {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--brand);
+}
+
+.reward-title {
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.reward-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.reward-bar,
+.level-bar {
+  flex: 1;
+  height: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+.reward-bar-fill,
+.level-bar-fill {
+  height: 100%;
+  background: var(--brand);
+  border-radius: 999px;
+}
+
+.reward-xp {
+  font-size: 12px;
+  font-weight: 700;
+  color: #b7bdd6;
+}
+
+/* ---------- 프로필: 레벨 카드 + 배지 ---------- */
+
+.level-card {
+  margin-bottom: 14px;
+  padding: 16px 18px;
+  color: white;
+  background: var(--navy);
+  border-radius: 14px;
+}
+
+.level-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.level-title {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.level-xp {
+  font-size: 12px;
+  color: #b7bdd6;
+}
+
+.level-card .level-bar {
+  height: 8px;
+  margin-top: 10px;
+}
+
+.level-hint {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: #b7bdd6;
+}
+
+.section-count {
+  margin-left: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+}
+
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 4px;
+  background: #f7f7f8;
+  border-radius: 12px;
+}
+
+.badge-ic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: #eceef2;
+  border-radius: 50%;
+}
+
+.badge-ic svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: #b5b9c4;
+}
+
+.badge-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  color: #a3a8b6;
+}
+
+.badge-item.on .badge-ic {
+  background: var(--brand);
+}
+
+.badge-item.on .badge-ic svg {
+  fill: var(--navy);
+  stroke: var(--navy);
+}
+
+.badge-item.on .badge-label {
+  color: var(--navy);
+}
+
 /* ---------- 코스 안내(브리핑) 3칸 요약: 거리 / 시간 / 방향 ---------- */
 
 .brief-row {

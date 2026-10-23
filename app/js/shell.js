@@ -181,6 +181,33 @@
     return li;
   }
 
+  // 레벨 카드와 배지 칸. 경험치/배지 계산은 js/progress.js가 한다.
+  function renderProgress() {
+    const p = window.Progress.get();
+    $("profile-level-title").textContent = `LV.${p.level.lv} ${p.level.name} 운전자`;
+    $("profile-xp-text").textContent = p.next ? `${p.xp} / ${p.next.min} XP` : `${p.xp} XP · 최고 레벨`;
+    $("profile-xp-bar").style.width = `${p.pct}%`;
+    $("profile-level-hint").textContent = p.next
+      ? `LV.${p.next.lv} ${p.next.name}까지 ${p.next.min - p.xp} XP 남았어요`
+      : "가장 높은 레벨이에요. 계속 안전하게 연습해요!";
+
+    const grid = $("profile-badges");
+    grid.innerHTML = "";
+    for (const b of p.badges) {
+      const item = document.createElement("div");
+      item.className = `badge-item${b.on ? " on" : ""}`;
+      item.innerHTML =
+        '<span class="badge-ic"><svg viewBox="0 0 24 24" stroke-width="1.6" stroke-linejoin="round">' +
+        '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 17l-5.2 2.7 1-5.9L3.5 9.7l5.9-.8z"/></svg></span>';
+      const label = document.createElement("span");
+      label.className = "badge-label";
+      label.textContent = b.label;
+      item.appendChild(label);
+      grid.appendChild(item);
+    }
+    $("profile-badge-count").textContent = `${p.badges.filter((b) => b.on).length} / ${p.badges.length}`;
+  }
+
   function openProfile() {
     const reports = loadReports();
     // 기록 목록은 최근 100개까지만 보관되므로, 완주 횟수는 별도 카운터를 우선 쓴다.
@@ -192,6 +219,7 @@
       ? formatDate(store.get(KEYS.firstUsed))
       : "-";
     renderInitials();
+    renderProgress();
 
     const list = $("profile-report-list");
     list.innerHTML = "";

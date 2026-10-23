@@ -212,6 +212,19 @@ function countGuidesByKeyword(guides, keyword) {
   return guides.filter((g) => g.guidance?.includes(keyword)).length;
 }
 
+/** 코스에 나온 요소 개수. 브리핑의 "이 코스의 미션"과 완주 보상(XP/배지)이 같이 쓴다. */
+function courseStats(guides) {
+  return {
+    left: countGuidesByKeyword(guides, "좌회전"),
+    right: countGuidesByKeyword(guides, "우회전"),
+    uturn: countGuidesByKeyword(guides, "유턴"),
+    roundabout: countGuidesByKeyword(guides, "회전교차로"),
+    unprotected: countGuidesByKeyword(guides, "비보호"),
+    cautions: findCautionGuides(guides).length,
+    turns: guides.filter((g) => /좌회전|우회전|유턴/.test(g.guidance ?? "")).length,
+  };
+}
+
 /**
  * 좌회전/우회전/유턴 개수와, "차선변경 약 N회"(기획서 원안: 출발지/경유지/목적지를
  * 뺀 턴바이턴 지시사항 총 개수로 근사)를 화면의 통계 카드에 채운다.
@@ -488,7 +501,7 @@ const learnedCard = document.getElementById("learned-card");
 const learnedList = document.getElementById("learned-list");
 
 /** 코스 이름/거리/시간, 이번 코스에 나온 요소별 횟수, 그리고 "오늘 배운 것"을 채운다. */
-function renderFinishScreen(guides, elapsedMin) {
+function renderFinishScreen(guides, elapsedMin, reward) {
   const parts = [pendingTitle];
   if (pendingSummary?.distanceKm != null) parts.push(`${pendingSummary.distanceKm}km`);
   if (elapsedMin != null) parts.push(`${elapsedMin}분`);
@@ -534,6 +547,31 @@ function renderFinishScreen(guides, elapsedMin) {
     learnedList.appendChild(li);
   });
   learnedCard.classList.toggle("hidden", learnedList.children.length === 0);
+
+  renderReward(reward);
+}
+
+/** 완주 화면 아래쪽 보상 카드: 레벨 업 > 새 배지 > 경험치 순으로 가장 큰 소식을 보여준다. */
+function renderReward(reward) {
+  const now = window.Progress.get();
+  const badgeText = reward.newBadges.map((b) => b.label).join(", ");
+  const kicker = document.getElementById("reward-kicker");
+  const title = document.getElementById("reward-title");
+
+  if (reward.leveledUp) {
+    kicker.textContent = "레벨 업!";
+    title.textContent = `LV.${reward.level.lv} ${reward.level.name}${badgeText ? ` · 새 배지 ${badgeText}` : ""}`;
+  } else if (reward.newBadges.length > 0) {
+    kicker.textContent = "새 배지 획득";
+    title.textContent = badgeText;
+  } else {
+    kicker.textContent = "경험치 획득";
+    title.textContent = now.next
+      ? `LV.${now.level.lv} ${now.level.name} · 다음 레벨까지 ${now.next.min - now.xp} XP`
+      : `LV.${now.level.lv} ${now.level.name} · 최고 레벨`;
+  }
+  document.getElementById("reward-bar-fill").style.width = `${now.pct}%`;
+  document.getElementById("reward-xp").textContent = `+${reward.gained} XP`;
 }
 
 document.getElementById("finish-home-btn").addEventListener("click", () => {
@@ -614,7 +652,8 @@ function finishCourse(guides) {
   statusMsg.textContent = "코스 완주! 리포트를 확인하세요.";
   // 코스 이름·거리는 브리핑 때 정한 값, 걸린 시간은 실제로 주행을 시작한 뒤 흐른 시간이다.
   const elapsedMin = navStartedAt ? Math.max(1, Math.round((Date.now() - navStartedAt) / 60000)) : null;
-  renderFinishScreen(guides, elapsedMin);
+  const reward = window.Progress.record(courseStats(guides));
+  renderFinishScreen(guides, elapsedMin, reward);
   reportPanel.classList.remove("hidden");
   saveReportToHistory(reportText.textContent, {
     title: pendingTitle,
@@ -970,6 +1009,35 @@ async function previewCourse(distanceKm, bearingDeg) {
   }
 }
 
+const briefLvChip = document.getElementById("brief-lv-chip");
+const briefXp = document.getElementById("brief-xp");
+const briefMissions = document.getElementById("brief-missions");
+
+/** 코스 안내의 난이도 칩, "이 코스의 미션"(요소별 횟수)과 완주하면 받을 XP를 채운다. */
+function renderBriefingMissions(guides) {
+  const level = levelOfScore(courseScore(guides));
+  briefLvChip.className = `lv-chip lv-${level}`;
+  briefLvChip.textContent = `LV.${level} ${LV_INFO[level].name}`;
+
+  const st = courseStats(guides);
+  briefXp.textContent = `+${window.Progress.xpFor(st)} XP`;
+
+  const items = [
+    st.right && `우회전 ${st.right}회`,
+    st.left && `좌회전 ${st.left}회`,
+    st.uturn && `유턴 ${st.uturn}회`,
+    st.roundabout && `회전교차로 ${st.roundabout}회`,
+    st.cautions && "주의 구간 통과",
+  ].filter(Boolean);
+  briefMissions.innerHTML = "";
+  (items.length ? items : ["회전이 거의 없는 코스"]).forEach((text) => {
+    const chip = document.createElement("span");
+    chip.className = "mission-chip";
+    chip.textContent = text;
+    briefMissions.appendChild(chip);
+  });
+}
+
 /**
  * requestRoute()+drawRoute()가 돌려준 route를 브리핑 화면(썸네일/통계/주의구간/요약)에 반영한다.
  * previewCourse(순환 코스)와 previewDestinationCourse(목적지 지정)가 공통으로 쓴다.
@@ -988,6 +1056,7 @@ function applyRouteToBriefing(route, rawPath, fallbackDistanceKm) {
   briefDirection.textContent = pendingDirectionLabel;
   renderBriefingStats(guides);
   renderCautionSummary(guides);
+  renderBriefingMissions(guides);
   briefingPanel.classList.remove("hidden");
 
   pendingSummary = { distanceKm: totalDistanceKm, durationMin };
