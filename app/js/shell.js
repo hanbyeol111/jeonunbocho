@@ -289,6 +289,10 @@
 
   $("home-card-reports").addEventListener("click", openReports);
   $("home-to-courses").addEventListener("click", () => show("courses"));
+  // 코스 / 내 리포트 / 프로필 화면 왼쪽 위의 뒤로가기 화살표는 홈으로 돌아간다.
+  for (const id of ["courses-back-btn", "reports-back-btn", "profile-back-btn"]) {
+    $(id).addEventListener("click", () => show("home"));
+  }
   document.querySelectorAll(".tab-item").forEach((btn) => {
     btn.addEventListener("click", () => {
       const name = btn.dataset.tab;

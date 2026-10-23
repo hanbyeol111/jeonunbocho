@@ -983,8 +983,20 @@ select {
   padding: 36px 20px 110px; /* 아래는 하단 탭바 높이만큼 비운다 */
 }
 
+/* 제목 줄: 왼쪽에 홈으로 돌아가는 뒤로가기 화살표 */
+.tab-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 6px -8px;
+}
+
+.tab-head.solo {
+  margin-bottom: 18px;
+}
+
 .tab-title {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 22px;
   font-weight: 800;
   color: var(--navy);
@@ -994,10 +1006,6 @@ select {
   margin: 0 0 18px;
   font-size: 14px;
   color: #888;
-}
-
-.tab-screen > .tab-title:not(:has(+ .tab-sub)) {
-  margin-bottom: 18px;
 }
 
 .link-btn {

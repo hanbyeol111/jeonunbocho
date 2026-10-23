@@ -145,7 +145,7 @@
 
   <!-- 3-1) 난이도별 코스: 난이도를 고르면 내 위치 주변에서 후보 순환 코스를 만들어 그 난이도에 맞는 것을 추천한다. -->
   <div id="courses-screen" class="tab-screen hidden">
-    <h1 class="tab-title">난이도별 코스</h1>
+    <div class="tab-head"><button id="courses-back-btn" type="button" class="page-back" aria-label="홈으로">‹</button><h1 class="tab-title">난이도별 코스</h1></div>
     <p class="tab-sub">빠른 길보다, 연습하기 좋은 길</p>
 
     <div id="lv-tabs" class="filter-tabs" role="group" aria-label="난이도">
@@ -168,7 +168,7 @@
 
   <!-- 3-2) 내 리포트 화면: 완주 기록을 필터(전체/이번 주/이번 달)로 걸러 보여준다. js/shell.js가 그린다. -->
   <div id="reports-screen" class="tab-screen reports-screen hidden">
-    <h1 class="tab-title">내 리포트</h1>
+    <div class="tab-head solo"><button id="reports-back-btn" type="button" class="page-back" aria-label="홈으로">‹</button><h1 class="tab-title">내 리포트</h1></div>
 
     <div id="reports-filters" class="filter-tabs" role="group" aria-label="기간">
       <button type="button" class="filter-tab active" data-filter="all">전체</button>
@@ -194,7 +194,7 @@
 
   <!-- 4) 프로필 화면: 계정 없이 이 기기에만 저장되는 프로필. 로그인은 추후. -->
   <div id="profile-screen" class="tab-screen profile-screen hidden">
-    <h1 class="tab-title">내 프로필</h1>
+    <div class="tab-head solo"><button id="profile-back-btn" type="button" class="page-back" aria-label="홈으로">‹</button><h1 class="tab-title">내 프로필</h1></div>
 
     <div class="profile-card">
       <div id="profile-avatar" class="profile-avatar">게</div>
