@@ -311,6 +311,130 @@
     renderReports();
   });
 
+  // ---------- 휴대폰 뒤로가기 ----------
+  //
+  // 웹앱에서 뒤로가기를 누르면 브라우저가 "이전 페이지"로 가 버려서 앱이 꺼진다. 그래서 화면 전환을
+  // 따로 기록하는 대신, 항상 "한 칸 앞 기록"을 하나 만들어 두고 뒤로가기가 오면 그 칸을 소비한 걸로
+  // 취급해서 앱 안에서 한 단계 뒤로 간 다음 다시 한 칸을 채운다.
+  //
+  // 주의: 사용자가 화면을 한 번이라도 눌러야 브라우저가 이 기록을 인정한다(크롬 정책). 그래서 첫 터치 때 만든다.
+  //
+  // 앱 종료: 웹페이지는 스스로 앱을 끌 수 없다. "종료"를 누르면 window.close()와 한 번 더 뒤로가기를
+  // 시도하고, 그래도 안 꺼지면 "뒤로가기를 한 번 더 누르세요"라고 알려 준다. 이때는 한 칸 앞 기록을
+  // 다시 채우지 않아서 그 뒤로가기가 그대로 앱을 나간다.
+
+  let backArmed = false;
+  let exiting = false;
+  const exitDialog = $("exit-dialog");
+  const confirmDialog = $("confirm-dialog");
+
+  function pushBuffer() {
+    try {
+      history.pushState({ jbc: "buffer" }, "");
+    } catch {
+      /* 기록을 못 만드는 환경이면 뒤로가기는 브라우저 기본 동작대로 간다 */
+    }
+  }
+
+  function armBackButton() {
+    if (backArmed) return;
+    backArmed = true;
+    try {
+      history.replaceState({ jbc: "base" }, "");
+    } catch {
+      /* 위와 같다 */
+    }
+    pushBuffer();
+  }
+  document.addEventListener("pointerup", armBackButton, { once: true, capture: true });
+  document.addEventListener("keydown", armBackButton, { once: true, capture: true });
+
+  /** 껍데기 화면에서 한 단계 뒤로. 처리했으면 true, 맨 처음 화면이라 더 갈 곳이 없으면 false. */
+  function shellBack() {
+    if (current === "disclaimer") {
+      if ($("disclaimer-confirm-btn").dataset.mode === "review") openProfile();
+      else show("login");
+      return true;
+    }
+    if (["courses", "reports", "profile"].includes(current)) {
+      show("home");
+      return true;
+    }
+    return false;
+  }
+
+  /** 앱 종료 확인 창. 열려 있는 동안에는 한 칸 앞 기록이 없어서, 뒤로가기를 한 번 더 누르면 그대로 나간다. */
+  function openExitDialog() {
+    if (exitDialog.open) return;
+    $("exit-dialog-text").textContent = '종료하려면 "종료"를 눌러주세요.';
+    exitDialog.showModal();
+  }
+
+  function closeExitDialog() {
+    if (exitDialog.open) exitDialog.close();
+    pushBuffer(); // 취소했으니 다음 뒤로가기도 다시 가로챌 수 있게 한 칸을 채운다
+  }
+
+  $("exit-cancel-btn").addEventListener("click", closeExitDialog);
+  exitDialog.addEventListener("cancel", (e) => {
+    e.preventDefault();
+    closeExitDialog();
+  });
+  $("exit-ok-btn").addEventListener("click", () => {
+    exiting = true;
+    try {
+      window.close(); // 설치형 앱에서는 이것만으로 꺼지기도 한다
+    } catch {
+      /* 닫을 수 없는 창이면 무시 */
+    }
+    history.back(); // 이전 페이지가 있으면(브라우저 탭) 그쪽으로 나간다
+    setTimeout(() => {
+      // 아직 살아 있으면 웹페이지가 스스로 끌 수 없는 환경이다.
+      $("exit-dialog-text").textContent = "화면 밖으로 나가려면 휴대폰 뒤로가기를 한 번 더 눌러주세요.";
+    }, 500);
+  });
+
+  /** 확인 창을 띄우고 눌린 답(true/false)을 돌려준다. 주행 중단 확인에 쓴다. */
+  function askConfirm({ title, text, ok }) {
+    return new Promise((resolve) => {
+      $("confirm-title").textContent = title;
+      $("confirm-text").textContent = text;
+      $("confirm-ok-btn").textContent = ok;
+      const done = (answer) => {
+        confirmDialog.close();
+        $("confirm-ok-btn").onclick = null;
+        $("confirm-cancel-btn").onclick = null;
+        resolve(answer);
+      };
+      $("confirm-ok-btn").onclick = () => done(true);
+      $("confirm-cancel-btn").onclick = () => done(false);
+      confirmDialog.showModal();
+    });
+  }
+  window.Shell.askConfirm = askConfirm;
+
+  window.addEventListener("popstate", () => {
+    if (!backArmed || exiting) return; // 종료 중이면 막지 않는다
+
+    // 열려 있는 창이 있으면 그것부터 닫는다
+    if (confirmDialog.open) {
+      confirmDialog.querySelector("#confirm-cancel-btn").click();
+      pushBuffer();
+      return;
+    }
+    // 지도 화면 쪽(app.js)이 먼저 처리할 기회를 준다
+    if (typeof window.Shell.onBack === "function" && window.Shell.onBack()) {
+      pushBuffer();
+      return;
+    }
+    if (shellBack()) {
+      pushBuffer();
+      return;
+    }
+    // 더 갈 곳이 없는 맨 처음 화면(홈/로그인): 종료할지 묻는다
+    openExitDialog();
+  });
+
   // ---------- 시작 ----------
 
   renderInitials();

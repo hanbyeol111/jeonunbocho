@@ -217,6 +217,15 @@ select {
   font-size: 17px;
 }
 
+/* ---------- 확인 창 (앱 종료 / 주행 중단) ---------- */
+
+.confirm-text {
+  margin: -6px 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #555;
+}
+
 /* ---------- 출발 전 점검 카드 ---------- */
 
 .predrive-lead {

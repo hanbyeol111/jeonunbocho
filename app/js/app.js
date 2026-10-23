@@ -1033,14 +1033,15 @@ document.getElementById("predrive-go-btn").addEventListener("click", () => {
 });
 
 // 주행 중 중단하고 싶을 때 (하단 바의 ✕ 버튼)
-navStopBtn.addEventListener("click", () => {
+function stopDriving() {
   if (watchId !== null) {
     navigator.geolocation.clearWatch(watchId);
     watchId = null;
   }
   exitNavMode();
   statusMsg.textContent = "주행을 중단했습니다.";
-});
+}
+navStopBtn.addEventListener("click", stopDriving);
 
 /**
  * 다이얼로그에서 고른 거리/방향으로 순환 코스를 만들고, 출발 전 브리핑 화면을 보여준다.
@@ -1791,6 +1792,40 @@ bottomSheetEl.addEventListener("click", (e) => {
   // 접힌 창의 제목 줄을 누르면 펼친다 (손잡이는 위에서 따로 처리하므로 제외)
   if (bottomSheetEl.classList.contains("collapsed") && !sheetGrip.contains(e.target)) setSheetCollapsed(false);
 });
+
+// ---------- 휴대폰 뒤로가기 (지도 화면 쪽) ----------
+//
+// js/shell.js가 뒤로가기를 가로채서, 지도 화면 쪽 상태는 여기서 처리한다. 처리했으면 true를 돌려준다.
+// 위에서부터 "가장 위에 떠 있는 것"을 하나씩 닫는다.
+window.Shell.onBack = () => {
+  const openDialog = [predriveDialog, courseDialog].find((d) => d.open);
+  if (openDialog) {
+    openDialog.close();
+    return true;
+  }
+  if (!cautionModal.classList.contains("hidden")) {
+    hideCautionModal();
+    return true;
+  }
+  if (!reportPanel.classList.contains("hidden")) {
+    // 완주 화면: "홈으로" 버튼과 같다
+    window.Shell.setReturn("home");
+    enterHomeScreen();
+    return true;
+  }
+  if (!navScreen.classList.contains("hidden")) {
+    // 주행 중: 실수로 주행이 끝나지 않게 한 번 묻는다
+    window.Shell.askConfirm({ title: "주행을 중단할까요?", text: "지금까지의 진행은 완주 기록에 남지 않아요.", ok: "중단" }).then((yes) => {
+      if (yes) stopDriving();
+    });
+    return true;
+  }
+  if (!mapScreen.classList.contains("hidden")) {
+    enterHomeScreen();
+    return true;
+  }
+  return false;
+};
 
 // 서비스워커 등록 (PWA 오프라인 지원)
 //

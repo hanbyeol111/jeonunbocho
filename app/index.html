@@ -502,6 +502,22 @@
     <button id="dialog-cancel-btn" type="button" class="secondary-btn">취소</button>
   </dialog>
 
+  <!-- 휴대폰 뒤로가기: 맨 처음 화면에서 한 번 더 누르면 뜨는 종료 확인 -->
+  <dialog id="exit-dialog" class="course-dialog">
+    <h2>앱을 종료할까요?</h2>
+    <p id="exit-dialog-text" class="confirm-text">종료하려면 "종료"를 눌러주세요.</p>
+    <button id="exit-ok-btn" type="button" class="primary-btn">종료</button>
+    <button id="exit-cancel-btn" type="button" class="secondary-btn">취소</button>
+  </dialog>
+
+  <!-- 주행 중 뒤로가기를 눌렀을 때: 실수로 주행이 끝나지 않게 한 번 더 묻는다 -->
+  <dialog id="confirm-dialog" class="course-dialog">
+    <h2 id="confirm-title"></h2>
+    <p id="confirm-text" class="confirm-text"></p>
+    <button id="confirm-ok-btn" type="button" class="primary-btn"></button>
+    <button id="confirm-cancel-btn" type="button" class="secondary-btn">계속하기</button>
+  </dialog>
+
   <!-- 출발 전 점검: 코스 안내에서 "시작하기"를 누르면 한 번 뜬다. 항목은 js/tips.js의 PREDRIVE_CHECKLIST가 채운다. -->
   <dialog id="predrive-dialog" class="course-dialog">
     <h2>출발 전 점검</h2>
