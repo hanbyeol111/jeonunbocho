@@ -138,6 +138,7 @@ async function requestRoute(origin, extra) {
 
 // ---------- 5. 지도에 경로 그리기 ----------
 
+let lastRouteBounds = null; // 가장 최근에 그린 코스가 한눈에 보이는 범위 (출발 전 점검을 취소하면 이 화면으로 되돌린다)
 let currentPolylines = []; // 이전 경로 (재시작 시 지우고 새로 그리기 위해 보관) - 도로마다 색이 달라서 배열이다
 
 /**
@@ -202,6 +203,7 @@ function drawRoute(routeData) {
   if (rawPath.length > 0) {
     const bounds = new kakao.maps.LatLngBounds();
     rawPath.forEach((p) => bounds.extend(new kakao.maps.LatLng(p.lat, p.lng)));
+    lastRouteBounds = bounds;
     map.setBounds(bounds);
   }
 
@@ -543,15 +545,19 @@ function enterNavMode(origin, guides, arrivalPoint = origin, summary = null) {
   bottomSheetEl.classList.add("hidden");
   navScreen.classList.remove("hidden");
 
-  // 코스 전체가 보이던 넓은 지도에서, 내 위치 근처가 크게 보이는 가까운 지도로 바로 바꾼다.
+  // 코스 전체가 보이던 넓은 지도에서, 내 위치 근처가 크게 보이는 가까운 지도로 바꾼다. (점검 창에서 이미 바꿨다면 그대로다)
   followMe = true;
-  if (map) {
-    map.setLevel(NAV_MAP_LEVEL);
-    map.setCenter(new kakao.maps.LatLng(origin.lat, origin.lng));
-  }
+  zoomToStart(origin);
   updateNavDisplay(origin, guides); // 첫 화면을 바로 채워둔다 (다음 GPS 업데이트를 기다리지 않고)
 
   startDriveMonitoring(origin, guides, arrivalPoint);
+}
+
+/** 지도를 내 위치 중심의 가까운 화면(주행 화면과 같은 단계)으로 바꾼다. */
+function zoomToStart(point) {
+  if (!map) return;
+  map.setLevel(NAV_MAP_LEVEL);
+  map.setCenter(new kakao.maps.LatLng(point.lat, point.lng));
 }
 
 function exitNavMode() {
@@ -1042,12 +1048,28 @@ briefingStartBtn.addEventListener("click", () => {
   if (!pendingOrigin || !pendingGuides) return;
   // 열 때마다 체크를 비워서, 매번 직접 하나씩 확인하게 한다.
   predriveList.querySelectorAll("input").forEach((box) => (box.checked = false));
+  predriveStarting = false;
+  // 점검 창이 뜨는 순간 지도를 주행 때처럼 내 위치 근처의 가까운 화면으로 바꿔 둔다. (아직 출발 전이고 움직이지 않아도)
+  zoomToStart(pendingOrigin);
   predriveDialog.showModal();
 });
 
-document.getElementById("predrive-cancel-btn").addEventListener("click", () => predriveDialog.close());
+// 출발하지 않고 점검 창을 닫으면 코스 전체가 보이던 화면으로 되돌린다. ("돌아가기", 휴대폰 뒤로가기, Esc 모두)
+let predriveStarting = false;
+
+function cancelPredrive() {
+  if (predriveDialog.open) predriveDialog.close();
+  if (lastRouteBounds && map) map.setBounds(lastRouteBounds);
+}
+
+predriveDialog.addEventListener("cancel", () => {
+  // Esc로 닫힐 때: 브라우저가 창을 닫기 전에 지도를 되돌려 둔다
+  if (lastRouteBounds && map) map.setBounds(lastRouteBounds);
+});
+document.getElementById("predrive-cancel-btn").addEventListener("click", cancelPredrive);
 
 document.getElementById("predrive-go-btn").addEventListener("click", () => {
+  predriveStarting = true;
   predriveDialog.close();
   if (!pendingOrigin || !pendingGuides) return;
   briefingPanel.classList.add("hidden");
@@ -1820,9 +1842,12 @@ bottomSheetEl.addEventListener("click", (e) => {
 // js/shell.js가 뒤로가기를 가로채서, 지도 화면 쪽 상태는 여기서 처리한다. 처리했으면 true를 돌려준다.
 // 위에서부터 "가장 위에 떠 있는 것"을 하나씩 닫는다.
 window.Shell.onBack = () => {
-  const openDialog = [predriveDialog, courseDialog].find((d) => d.open);
-  if (openDialog) {
-    openDialog.close();
+  if (predriveDialog.open) {
+    cancelPredrive(); // 출발 전 점검을 취소하면 코스 전체 화면으로 되돌린다
+    return true;
+  }
+  if (courseDialog.open) {
+    courseDialog.close();
     return true;
   }
   if (!cautionModal.classList.contains("hidden")) {
