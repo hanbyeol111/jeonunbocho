@@ -79,65 +79,96 @@
   </div>
 
   <!-- 3) 홈 화면 (= 메인 화면): 지도 없이 뜨는 화면. 여기서 카드를 골라야 지도 화면(#map-screen)으로 넘어간다. -->
-  <div id="home-screen" class="home-screen hidden">
-    <header class="home-header">
-      <h1>오늘의 연습</h1>
-      <button id="home-profile-btn" type="button" class="home-profile-btn" aria-label="내 프로필">
-        <span id="home-profile-initial">게</span>
-      </button>
-    </header>
-
-    <p class="home-greeting">안녕하세요!</p>
-    <p class="home-question"><span class="swoosh">오늘은 어떤 연습을 할까요?</span></p>
+  <div id="home-screen" class="tab-screen home-screen hidden">
+    <div class="home-hero">
+      <img class="home-hero-car" src="img/car.svg" alt="" />
+      <p class="home-greeting">안녕하세요, <span id="home-nickname">게스트</span>님!</p>
+      <h1 class="home-title">오늘은 어떤 연습을<br />할까요?</h1>
+      <p class="home-sub">원하는 방식으로 도로 감각을 익혀보세요.</p>
+    </div>
     <p id="home-status" class="tab-placeholder hidden"></p>
+
+    <div class="recommend-card">
+      <svg class="recommend-art" viewBox="0 0 160 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <rect width="160" height="180" fill="#f4f2ec"/>
+        <path d="M0 40H160M0 100H160M0 150H160M40 0V180M95 0V180M140 0V180" stroke="#ffffff" stroke-width="5"/>
+        <path d="M60 180C90 150 120 160 160 120" stroke="#dce8f4" stroke-width="18" fill="none"/>
+        <rect x="102" y="48" width="30" height="44" rx="5" fill="#e2eed9"/>
+        <path d="M40 120V40H95L140 70V120L95 150H60Z" stroke="#f5de62" stroke-width="5" stroke-linejoin="round" fill="none"/>
+        <circle cx="40" cy="120" r="7" fill="#1b2340" stroke="#fff176" stroke-width="3"/>
+      </svg>
+      <div class="recommend-fade"></div>
+      <div class="recommend-body">
+        <span class="recommend-pill">오늘의 추천</span>
+        <p class="recommend-title">도심 순환 코스</p>
+        <div class="recommend-stats"><svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg>5.0km <span class="dot">·</span> <svg class="ic ic-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>약 20분</div>
+        <p class="recommend-lv">5km 순환 · 무작위 방향</p>
+      </div>
+      <button id="recommend-start-btn" type="button" class="recommend-go">시작하기 →</button>
+    </div>
+
+    <div class="home-section-head">
+      <h2>다른 방식으로 연습하기</h2>
+      <button id="home-to-courses" type="button" class="link-btn">난이도별 코스 ›</button>
+    </div>
 
     <div class="home-grid">
       <button id="home-card-destination" type="button" class="home-card">
-        <svg class="ic home-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg>
+        <span class="home-card-ic tint-yellow"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg></span>
         <span class="home-card-title">목적지 지정</span>
-        <span class="home-card-subtitle">가고 싶은 곳으로</span>
-        <span class="home-card-chevron" aria-hidden="true">›</span>
+        <span class="home-card-subtitle">가고 싶은 곳으로<br />가보세요.</span>
+        <span class="home-card-arrow" aria-hidden="true">→</span>
       </button>
 
       <button id="home-card-loop" type="button" class="home-card">
-        <svg class="ic home-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><path d="M3.3 11.2c3-.2 5.3.2 6.5.8M20.7 11.2c-3-.2-5.3.2-6.5.8M12 14.2V20.7"/></svg>
+        <span class="home-card-ic tint-navy"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 10-2.5 5.8"/><path d="M20 5v5h-5"/></svg></span>
         <span class="home-card-title">순환형 코스</span>
-        <span class="home-card-subtitle">20분 · 5km</span>
-        <span class="home-card-chevron" aria-hidden="true">›</span>
+        <span class="home-card-subtitle">원하는 거리만큼<br />돌고 돌아와요.</span>
+        <span class="home-card-foot"><span class="home-card-chip">20분 · 5km</span><span aria-hidden="true">→</span></span>
       </button>
 
       <button id="home-card-element" type="button" class="home-card">
-        <svg class="ic home-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20V10a5 5 0 0110 0v9"/><path d="M13.5 15.5L17 19l3.5-3.5"/></svg>
+        <span class="home-card-ic tint-navy"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20V10a5 5 0 0110 0v9"/><path d="M13.5 15.5L17 19l3.5-3.5"/></svg></span>
         <span class="home-card-title">특정 요소</span>
-        <span class="home-card-subtitle">유턴 · 회전교차로</span>
-        <span class="home-card-chevron" aria-hidden="true">›</span>
+        <span class="home-card-subtitle">유턴 · 회전교차로 등<br />집중 연습해요.</span>
+        <span class="home-card-arrow" aria-hidden="true">→</span>
       </button>
 
       <button id="home-card-reports" type="button" class="home-card">
-        <svg class="ic home-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 17l-5.2 2.7 1-5.9L3.5 9.7l5.9-.8z"/></svg>
+        <span class="home-card-ic tint-yellow"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 17l-5.2 2.7 1-5.9L3.5 9.7l5.9-.8z"/></svg></span>
         <span class="home-card-title">내 리포트</span>
-        <span class="home-card-subtitle">주행 기록 보기</span>
-        <span class="home-card-chevron" aria-hidden="true">›</span>
+        <span class="home-card-subtitle">주행 기록을<br />확인해요.</span>
+        <span class="home-card-arrow" aria-hidden="true">→</span>
       </button>
     </div>
+  </div>
 
-    <div class="recommend-card">
-      <img class="recommend-art" src="img/hills.svg" alt="" />
-      <span class="recommend-pill">추천 코스</span>
-      <span class="recommend-badge">LV.2 · 5km 코스</span>
-      <p class="recommend-title">도심 순환 코스</p>
-      <p class="recommend-stats">5.0km · 약 20분 · 무작위 방향</p>
-      <button id="recommend-start-btn" type="button" class="primary-btn">시작하기 <span aria-hidden="true">›</span></button>
+  <!-- 3-1) 난이도별 코스: 난이도를 고르면 내 위치 주변에서 후보 순환 코스를 만들어 그 난이도에 맞는 것을 추천한다. -->
+  <div id="courses-screen" class="tab-screen hidden">
+    <h1 class="tab-title">난이도별 코스</h1>
+    <p class="tab-sub">빠른 길보다, 연습하기 좋은 길</p>
+
+    <div id="lv-tabs" class="filter-tabs" role="group" aria-label="난이도">
+      <button type="button" class="filter-tab" data-lv="1">LV.1 입문</button>
+      <button type="button" class="filter-tab active" data-lv="2">LV.2 초급</button>
+      <button type="button" class="filter-tab" data-lv="3">LV.3 중급</button>
+    </div>
+    <p id="lv-desc" class="lv-desc"></p>
+    <button id="lv-search-btn" type="button" class="primary-btn">이 난이도 코스 찾기</button>
+    <p id="lv-note" class="tab-placeholder hidden"></p>
+    <ul id="lv-results" class="course-cards"></ul>
+
+    <h2 class="section-title">직접 만들기</h2>
+    <div class="make-grid">
+      <button id="courses-make-dest" type="button" class="make-btn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg>목적지 지정</button>
+      <button id="courses-make-loop" type="button" class="make-btn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><path d="M3.3 11.2c3-.2 5.3.2 6.5.8M20.7 11.2c-3-.2-5.3.2-6.5.8M12 14.2V20.7"/></svg>순환형</button>
+      <button id="courses-make-element" type="button" class="make-btn"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20V10a5 5 0 0110 0v9"/><path d="M13.5 15.5L17 19l3.5-3.5"/></svg>특정 요소</button>
     </div>
   </div>
 
   <!-- 3-2) 내 리포트 화면: 완주 기록을 필터(전체/이번 주/이번 달)로 걸러 보여준다. js/shell.js가 그린다. -->
-  <div id="reports-screen" class="reports-screen hidden">
-    <header class="page-header">
-      <button id="reports-back-btn" type="button" class="page-back" aria-label="홈으로">‹</button>
-      <h1>내 리포트</h1>
-      <span class="page-header-spacer"></span>
-    </header>
+  <div id="reports-screen" class="tab-screen reports-screen hidden">
+    <h1 class="tab-title">내 리포트</h1>
 
     <div id="reports-filters" class="filter-tabs" role="group" aria-label="기간">
       <button type="button" class="filter-tab active" data-filter="all">전체</button>
@@ -162,12 +193,8 @@
   </div>
 
   <!-- 4) 프로필 화면: 계정 없이 이 기기에만 저장되는 프로필. 로그인은 추후. -->
-  <div id="profile-screen" class="profile-screen hidden">
-    <header class="page-header">
-      <button id="profile-back-btn" type="button" class="page-back" aria-label="홈으로">‹</button>
-      <h1>내 프로필</h1>
-      <span class="page-header-spacer"></span>
-    </header>
+  <div id="profile-screen" class="tab-screen profile-screen hidden">
+    <h1 class="tab-title">내 프로필</h1>
 
     <div class="profile-card">
       <div id="profile-avatar" class="profile-avatar">게</div>
@@ -198,6 +225,26 @@
     </button>
     <button id="profile-disclaimer-btn" type="button" class="secondary-btn">안내 및 면책 조항 다시 보기</button>
   </div>
+
+  <!-- 하단 탭바: 홈 · 코스 · 리포트 · 프로필. 지도/주행 화면에서는 숨긴다. js/shell.js가 보였다 숨겼다 한다. -->
+  <nav id="tab-bar" class="tab-bar hidden">
+    <button type="button" class="tab-item" data-tab="home">
+      <span class="tab-pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-6.5 8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/></svg></span>
+      <span class="tab-label">홈</span>
+    </button>
+    <button type="button" class="tab-item" data-tab="courses">
+      <span class="tab-pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><path d="M3.3 11.2c3-.2 5.3.2 6.5.8M20.7 11.2c-3-.2-5.3.2-6.5.8M12 14.2V20.7"/></svg></span>
+      <span class="tab-label">코스</span>
+    </button>
+    <button type="button" class="tab-item" data-tab="reports">
+      <span class="tab-pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 17l-5.2 2.7 1-5.9L3.5 9.7l5.9-.8z"/></svg></span>
+      <span class="tab-label">리포트</span>
+    </button>
+    <button type="button" class="tab-item" data-tab="profile">
+      <span class="tab-pill"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0-7z"/><path d="M5 20c1.2-3.6 4-5.5 7-5.5s5.8 1.9 7 5.5"/></svg></span>
+      <span class="tab-label">프로필</span>
+    </button>
+  </nav>
 
   <!-- 지도 화면: 홈 화면에서 카드를 고르기 전까지는 숨겨져 있다. -->
   <div id="map-screen" class="map-screen hidden">

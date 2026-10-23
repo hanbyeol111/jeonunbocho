@@ -536,10 +536,14 @@ function renderFinishScreen(guides, elapsedMin) {
   learnedCard.classList.toggle("hidden", learnedList.children.length === 0);
 }
 
-document.getElementById("finish-home-btn").addEventListener("click", () => enterHomeScreen());
-document.getElementById("finish-reports-btn").addEventListener("click", () => {
+document.getElementById("finish-home-btn").addEventListener("click", () => {
+  window.Shell.setReturn("home");
   enterHomeScreen();
-  document.getElementById("home-card-reports").click(); // js/shell.js가 내 리포트 화면을 연다
+});
+document.getElementById("finish-reports-btn").addEventListener("click", () => {
+  resetCourseState();
+  mapScreen.classList.add("hidden");
+  window.Shell.openReports(); // js/shell.js가 내 리포트 화면을 연다
 });
 
 /**
@@ -1209,8 +1213,8 @@ kakao.maps.load(() => {
  * (코스를 실제로 만들 때 다시 한번 최신 위치를 가져오긴 하지만, 지도 화면에
  * 들어서는 순간부터 내 위치가 보이는 게 자연스럽다).
  */
-function enterMapScreen() {
-  homeScreen.classList.add("hidden");
+function enterMapScreen({ skipLocate = false } = {}) {
+  window.Shell.enterMap();
   mapScreen.classList.remove("hidden");
 
   if (!mapInitialized && kakaoReady) {
@@ -1225,6 +1229,7 @@ function enterMapScreen() {
   }
 
   updateMyLocationLabel(currentPosition); // 이미 아는 위치가 있으면 바로 보여주고, 없으면 "확인 중..." 상태로
+  if (skipLocate) return; // 이미 만든 코스를 바로 그릴 때는 위치를 다시 잡아 지도를 옮기면 안 된다
 
   getCurrentLocation()
     .then((pos) => {
@@ -1241,7 +1246,7 @@ function enterMapScreen() {
 function enterHomeScreen() {
   resetCourseState();
   mapScreen.classList.add("hidden");
-  homeScreen.classList.remove("hidden");
+  window.Shell.leaveMap(); // 들어왔던 화면(홈 또는 코스)으로 돌아간다
 }
 
 backToHomeBtn.addEventListener("click", enterHomeScreen);
@@ -1301,8 +1306,8 @@ document.getElementById("home-card-element").addEventListener("click", () => {
   showStartPanel("element");
 });
 
-/** 추천 후보 하나를 지도에 그리고 코스 안내(브리핑)를 띄운다. */
-function showElementCandidate(cand, keyword) {
+/** 후보 하나를 지도에 그리고 코스 안내(브리핑)를 띄운다. title은 완주 기록에 남는 코스 이름이다. */
+function showCourseCandidate(cand, title) {
   if (watchId !== null) {
     navigator.geolocation.clearWatch(watchId);
     watchId = null;
@@ -1314,11 +1319,16 @@ function showElementCandidate(cand, keyword) {
   const { route, rawPath } = drawRoute(cand.routeData);
   pendingOrigin = cand.origin;
   pendingArrivalPoint = cand.origin; // 순환 코스라서 출발지로 돌아오면 완주
-  pendingTitle = `${keyword} 연습 코스`;
+  pendingTitle = title;
   pendingDirectionLabel = DIRECTION_NAMES[cand.bearing] ?? "지정";
-  pendingGuides = applyRouteToBriefing(route, rawPath, ELEMENT_COURSE_KM);
-  statusMsg.textContent = `${keyword} ${cand.count}회가 들어간 코스예요. 아래에서 확인하고 시작해보세요.`;
+  pendingGuides = applyRouteToBriefing(route, rawPath, cand.distanceKm ?? ELEMENT_COURSE_KM);
+  statusMsg.textContent = "코스 준비 완료! 아래에서 확인하고 시작해보세요.";
   briefingPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function showElementCandidate(cand, keyword) {
+  showCourseCandidate(cand, `${keyword} 연습 코스`);
+  statusMsg.textContent = `${keyword} ${cand.count}회가 들어간 코스예요. 아래에서 확인하고 시작해보세요.`;
 }
 
 async function searchElementCourses() {
@@ -1409,6 +1419,169 @@ document.getElementById("recommend-start-btn").addEventListener("click", () => {
   showStartPanel("loop");
   previewCourse(5.0, undefined); // 추천 코스: 5km, 무작위 방향
 });
+
+// ---------- 난이도별 코스 ----------
+//
+// 기획서의 "난이도별 코스 분류"는 원래 도로 데이터(차선 수, 신호, 고가 등)가 필요하다. 지금은 그런 데이터가
+// 없어서, 후보 순환 코스를 여러 개 만들어 본 뒤 안내 문구에서 센 "회전 횟수 + 주의 구간"으로 난이도를
+// 매긴다. 즉 "넓은 도로 · 직진 위주" 같은 도로 성격이 아니라 "회전과 주의 구간이 얼마나 많은가"가 기준이다.
+
+const LV_INFO = {
+  1: { name: "입문", desc: "회전과 주의 구간이 적어요", km: 4 },
+  2: { name: "초급", desc: "신호 교차로 · 좌/우회전 · 유턴이 섞여 있어요", km: 5 },
+  3: { name: "중급", desc: "비보호 좌회전 · 회전교차로 등 주의 구간이 많아요", km: 6.5 },
+};
+const LV_SCORE_MAX = { 1: 6, 2: 14 }; // 점수가 이 값 이하면 해당 난이도, 넘으면 다음 난이도 (3은 그 이상)
+const COURSE_CANDIDATES = 6;
+const COURSE_TOP = 3;
+
+/** 회전·유턴 횟수 + 주의 구간 x3 = 난이도 점수. 점수로 1~3단계를 나눈다. */
+function courseScore(guides) {
+  const turns = guides.filter((g) => /좌회전|우회전|유턴/.test(g.guidance ?? "")).length;
+  return turns + 3 * findCautionGuides(guides).length;
+}
+function levelOfScore(score) {
+  return score <= LV_SCORE_MAX[1] ? 1 : score <= LV_SCORE_MAX[2] ? 2 : 3;
+}
+
+const lvTabs = document.getElementById("lv-tabs");
+const lvDesc = document.getElementById("lv-desc");
+const lvSearchBtn = document.getElementById("lv-search-btn");
+const lvNote = document.getElementById("lv-note");
+const lvResults = document.getElementById("lv-results");
+let selectedLv = 2;
+
+function renderLvTab() {
+  lvTabs.querySelectorAll(".filter-tab").forEach((t) => t.classList.toggle("active", Number(t.dataset.lv) === selectedLv));
+  lvDesc.textContent = LV_INFO[selectedLv].desc;
+}
+renderLvTab();
+
+lvTabs.addEventListener("click", (e) => {
+  const tab = e.target.closest(".filter-tab");
+  if (!tab) return;
+  selectedLv = Number(tab.dataset.lv);
+  lvResults.innerHTML = "";
+  lvNote.classList.add("hidden");
+  renderLvTab();
+});
+
+/** 후보 하나를 지도 화면에 그려서 코스 안내까지 띄운다. 특정 요소 추천과 난이도별 코스가 같이 쓴다. */
+function openCandidateOnMap(cand, title) {
+  currentPosition = cand.origin;
+  enterMapScreen({ skipLocate: true });
+  showStartPanel("loop"); // 이전 코스 흔적을 지우고 순환 패널로 맞춘다
+  initMap(cand.origin.lat, cand.origin.lng);
+  showCourseCandidate(cand, title);
+}
+
+function courseCardNode(cand, level) {
+  const info = LV_INFO[level];
+  const li = document.createElement("li");
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "course-card";
+
+  const chips = document.createElement("span");
+  chips.className = "course-chips";
+  const lvChip = document.createElement("span");
+  lvChip.className = `lv-chip lv-${level}`;
+  lvChip.textContent = `LV.${level} ${info.name}`;
+  chips.appendChild(lvChip);
+  if (cand.cautionCount > 0) {
+    const warn = document.createElement("span");
+    warn.className = "warn-chip";
+    warn.textContent = "초보 주의";
+    chips.appendChild(warn);
+  }
+
+  const title = document.createElement("strong");
+  title.className = "course-title";
+  title.textContent = `${DIRECTION_NAMES[cand.bearing]}쪽 순환 코스`;
+  const desc = document.createElement("span");
+  desc.className = "course-desc";
+  desc.textContent = cand.cautionCount > 0 ? `주의 구간 ${cand.cautionCount}곳 포함` : "주의 구간 없음";
+  const meta = document.createElement("span");
+  meta.className = "course-meta";
+  meta.textContent = `${cand.distanceKm}km · 약 ${cand.durationMin ?? "-"}분 · ${cand.turnsText}`;
+  const chev = document.createElement("span");
+  chev.className = "course-chev";
+  chev.textContent = "›";
+
+  btn.append(chips, title, desc, meta, chev);
+  li.appendChild(btn);
+  btn.addEventListener("click", () => openCandidateOnMap(cand, `${DIRECTION_NAMES[cand.bearing]}쪽 순환 코스`));
+  return li;
+}
+
+async function searchLevelCourses() {
+  lvSearchBtn.disabled = true;
+  lvResults.innerHTML = "";
+  lvNote.classList.remove("hidden");
+  lvNote.textContent = "현재 위치를 확인하는 중...";
+
+  try {
+    const origin = await getCurrentLocation();
+    currentPosition = origin;
+    lvNote.textContent = `LV.${selectedLv} 코스를 찾는 중... (후보 ${COURSE_CANDIDATES}개를 비교해요)`;
+
+    const km = LV_INFO[selectedLv].km;
+    const startBearing = Math.floor(Math.random() * 8) * 45;
+    const settled = await Promise.allSettled(
+      Array.from({ length: COURSE_CANDIDATES }, async (_, i) => {
+        const bearing = (startBearing + i * 45 * (8 / COURSE_CANDIDATES)) % 360;
+        const waypoint = calculateWaypoint(origin.lat, origin.lng, km / 2, bearing);
+        const routeData = await requestRoute(origin, { waypoint });
+        const route = routeData.routes?.[0];
+        if (!route || route.result_code !== 0) throw new Error("경로 없음");
+        const guides = (route.sections ?? []).flatMap((s) => s.guides ?? []);
+        const last = guides[guides.length - 1];
+        const left = countGuidesByKeyword(guides, "좌회전");
+        const right = countGuidesByKeyword(guides, "우회전");
+        const uturn = countGuidesByKeyword(guides, "유턴");
+        return {
+          routeData,
+          origin,
+          bearing: (Math.round(bearing / 45) * 45) % 360,
+          level: levelOfScore(courseScore(guides)),
+          cautionCount: findCautionGuides(guides).length,
+          endGapM: last ? distanceMeters(origin.lat, origin.lng, last.y, last.x) : Infinity,
+          distanceKm: Number(((route.summary?.distance ?? 0) / 1000).toFixed(1)),
+          durationMin: route.summary?.duration ? Math.round(route.summary.duration / 60) : null,
+          turnsText: [left && `좌 ${left}`, right && `우 ${right}`, uturn && `유턴 ${uturn}`].filter(Boolean).join(" · ") || "회전 없음",
+        };
+      })
+    );
+
+    // 코스는 반드시 출발한 곳으로 돌아와야 한다.
+    const candidates = settled
+      .filter((r) => r.status === "fulfilled")
+      .map((r) => r.value)
+      .filter((c) => c.endGapM <= RETURN_TOLERANCE_M);
+    if (candidates.length === 0) throw new Error("코스를 만들지 못했어요. 잠시 뒤에 다시 시도해주세요.");
+
+    const exact = candidates.filter((c) => c.level === selectedLv);
+    let shown = exact.slice(0, COURSE_TOP);
+    if (shown.length > 0) {
+      lvNote.textContent = "마음에 드는 코스를 눌러 확인해보세요.";
+    } else {
+      // 이 근처에 딱 맞는 난이도가 없으면, 난이도가 가장 가까운 후보를 보여주고 그렇다고 말한다.
+      shown = [...candidates].sort((a, b) => Math.abs(a.level - selectedLv) - Math.abs(b.level - selectedLv)).slice(0, COURSE_TOP);
+      lvNote.textContent = `이 근처에서는 LV.${selectedLv} 코스를 찾지 못해, 난이도가 가장 가까운 코스를 보여드려요.`;
+    }
+    shown.forEach((c) => lvResults.appendChild(courseCardNode(c, c.level)));
+  } catch (err) {
+    lvNote.textContent = `오류: ${err.message}`;
+  } finally {
+    lvSearchBtn.disabled = false;
+  }
+}
+lvSearchBtn.addEventListener("click", searchLevelCourses);
+
+// 직접 만들기: 홈 카드와 같은 동작
+document.getElementById("courses-make-dest").addEventListener("click", () => document.getElementById("home-card-destination").click());
+document.getElementById("courses-make-loop").addEventListener("click", () => document.getElementById("home-card-loop").click());
+document.getElementById("courses-make-element").addEventListener("click", () => document.getElementById("home-card-element").click());
 
 // 서비스워커 등록 (PWA 오프라인 지원)
 //

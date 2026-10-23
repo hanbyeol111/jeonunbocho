@@ -1,5 +1,5 @@
 /*
-  앱 껍데기(로그인 / 면책 동의 / 홈 / 내 리포트 / 프로필) 화면 전환.
+  앱 껍데기(로그인 / 면책 동의 / 홈 / 코스 / 내 리포트 / 프로필) 화면 전환과 하단 탭바.
 
   카카오 SDK와 상관없이 바로 돌아야 해서 app.js와 분리했다. app.js와 전역 이름이 겹치지
   않도록 전체를 함수로 감쌌고, localStorage 키 이름만 app.js와 같은 값을 맞춰 쓴다.
@@ -40,15 +40,52 @@
     login: $("login-screen"),
     disclaimer: $("disclaimer-screen"),
     home: $("home-screen"),
+    courses: $("courses-screen"),
     reports: $("reports-screen"),
     profile: $("profile-screen"),
   };
 
+  // 하단 탭바가 보이는 화면들. 지도 화면(app.js가 따로 관리)에 들어가 있는 동안은 숨긴다.
+  const TAB_SCREENS = ["home", "courses", "reports", "profile"];
+  let current = null; // 지금 보이는 껍데기 화면 이름
+  let inMap = false; // 지도 화면 안에 있는지
+  let beforeMap = "home"; // 지도 화면에서 "뒤로"를 누르면 돌아갈 화면
+
+  function syncTabs() {
+    $("tab-bar").classList.toggle("hidden", inMap || !TAB_SCREENS.includes(current));
+    document.querySelectorAll(".tab-item").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.tab === current);
+    });
+  }
+
   function show(name) {
+    current = name;
+    inMap = false;
     for (const [key, el] of Object.entries(screens)) {
       el.classList.toggle("hidden", key !== name);
     }
+    syncTabs();
   }
+
+  // app.js(지도 화면)가 쓰는 연결 지점. 카카오 SDK와 상관없이 shell.js가 먼저 로드된다.
+  window.Shell = {
+    show,
+    enterMap() {
+      if (TAB_SCREENS.includes(current)) beforeMap = current;
+      inMap = true;
+      for (const el of Object.values(screens)) el.classList.add("hidden");
+      syncTabs();
+    },
+    leaveMap() {
+      show(beforeMap);
+    },
+    setReturn(name) {
+      beforeMap = name;
+    },
+    openReports() {
+      openReports();
+    },
+  };
 
   function getNickname() {
     return store.get(KEYS.nickname) || DEFAULT_NICKNAME;
@@ -56,7 +93,7 @@
 
   function renderInitials() {
     const initial = Array.from(getNickname())[0] || "게";
-    $("home-profile-initial").textContent = initial;
+    $("home-nickname").textContent = getNickname();
     $("profile-avatar").textContent = initial;
   }
 
@@ -175,8 +212,6 @@
     renderInitials();
   }
 
-  $("home-profile-btn").addEventListener("click", openProfile);
-  $("profile-back-btn").addEventListener("click", () => show("home"));
   $("profile-save-btn").addEventListener("click", saveNickname);
   $("profile-nickname").addEventListener("keydown", (e) => {
     if (e.key === "Enter") saveNickname();
@@ -225,7 +260,15 @@
   }
 
   $("home-card-reports").addEventListener("click", openReports);
-  $("reports-back-btn").addEventListener("click", () => show("home"));
+  $("home-to-courses").addEventListener("click", () => show("courses"));
+  document.querySelectorAll(".tab-item").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const name = btn.dataset.tab;
+      if (name === "reports") openReports();
+      else if (name === "profile") openProfile();
+      else show(name);
+    });
+  });
   $("reports-filters").addEventListener("click", (e) => {
     const tab = e.target.closest(".filter-tab");
     if (!tab) return;

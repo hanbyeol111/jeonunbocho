@@ -765,74 +765,345 @@ select {
   color: var(--navy);
 }
 
-/* ---------- 홈 화면 (지도 없이 뜨는 첫 화면) ---------- */
+/* ---------- 탭 화면 공통 (홈 / 코스 / 내 리포트 / 프로필) ---------- */
 
-.home-screen {
+.tab-screen {
   position: fixed;
   inset: 0;
   overflow-y: auto;
   background: #ffffff;
-  padding: 28px 20px 40px;
+  padding: 36px 20px 110px; /* 아래는 하단 탭바 높이만큼 비운다 */
 }
 
-.home-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.home-header h1 {
-  margin: 0;
+.tab-title {
+  margin: 0 0 6px;
   font-size: 22px;
   font-weight: 800;
   color: var(--navy);
 }
 
-.home-profile-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 2px solid var(--brand);
-  background: var(--navy);
-  color: var(--brand);
-  font-size: 16px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.home-greeting {
-  margin: 18px 0 2px;
+.tab-sub {
+  margin: 0 0 18px;
   font-size: 14px;
   color: #888;
 }
 
-/* 질문 문장 밑에 노란 붓 자국(swoosh)을 깐다 */
-.home-question {
-  margin: 0 0 20px;
-  font-size: 20px;
+.tab-screen > .tab-title:not(:has(+ .tab-sub)) {
+  margin-bottom: 18px;
+}
+
+.link-btn {
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #8a8f9c;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* ---------- 하단 탭바 ---------- */
+
+.tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  padding: 8px 8px calc(10px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid #eee;
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: #a3a8b6;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.tab-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 28px;
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+
+.tab-label {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tab-item.active {
+  color: var(--navy);
+}
+
+.tab-item.active .tab-pill {
+  background: var(--brand);
+}
+
+.tab-item.active .tab-label {
+  font-weight: 800;
+}
+
+/* ---------- 홈 화면 (홈 B) ---------- */
+
+.home-hero {
+  position: relative;
+  min-height: 140px;
+  padding-right: 96px;
+}
+
+.home-hero-car {
+  position: absolute;
+  right: -6px;
+  top: 6px;
+  width: 110px;
+  height: auto;
+}
+
+.home-greeting {
+  margin: 8px 0 6px;
+  font-size: 15px;
+  color: var(--navy);
+}
+
+.home-title {
+  margin: 0 0 8px;
+  font-size: 24px;
+  line-height: 32px;
   font-weight: 800;
   color: var(--navy);
 }
 
-.swoosh {
-  background: linear-gradient(transparent 62%, var(--brand) 62%, var(--brand) 92%, transparent 92%);
-  padding: 0 2px;
+.home-sub {
+  margin: 0;
+  font-size: 13px;
+  color: #8a8f9c;
+}
+
+/* 오늘의 추천 카드 */
+.recommend-card {
+  position: relative;
+  margin-top: 16px;
+  padding: 20px;
+  overflow: hidden;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 20px;
+  box-shadow: 0 6px 24px rgba(27, 35, 64, 0.07);
+}
+
+.recommend-art {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 52%;
+  height: 100%;
+}
+
+.recommend-fade {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 52%;
+  background: linear-gradient(90deg, #fff 0%, rgba(255, 255, 255, 0) 40%);
+}
+
+.recommend-body {
+  position: relative;
+  width: 58%;
+}
+
+.recommend-pill {
+  display: inline-flex;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--brand-text);
+  background: #fffbd6;
+  border-radius: 999px;
+}
+
+.recommend-title {
+  margin: 12px 0 10px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.recommend-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--navy);
+}
+
+.recommend-stats .dot {
+  color: #c3c6cf;
+}
+
+.ic-sm {
+  width: 16px;
+  height: 16px;
+}
+
+.recommend-lv {
+  margin: 8px 0 16px;
+  font-size: 12.5px;
+  color: #8a8f9c;
+}
+
+.recommend-go {
+  position: relative;
+  width: 62%;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--brand-text);
+  background: var(--brand);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(245, 222, 98, 0.5);
+  cursor: pointer;
+}
+
+.home-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 26px 2px 12px;
+}
+
+.home-section-head h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--navy);
 }
 
 .home-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 12px;
 }
 
 .home-card {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
+  min-height: 158px;
   padding: 16px;
+  text-align: left;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(27, 35, 64, 0.05);
+  cursor: pointer;
+}
+
+.home-card-ic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 10px;
+  color: var(--navy);
+  border-radius: 50%;
+}
+
+.home-card-ic .ic {
+  width: 22px;
+  height: 22px;
+}
+
+.tint-yellow {
+  background: #fffbd6;
+}
+
+.tint-navy {
+  background: var(--navy-soft);
+}
+
+.home-card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.home-card-subtitle {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #8a8f9c;
+}
+
+.home-card-arrow {
+  margin-top: auto;
+  align-self: flex-end;
+  font-size: 18px;
+  color: var(--navy);
+}
+
+.home-card-foot {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  font-size: 18px;
+  color: var(--navy);
+}
+
+.home-card-chip {
+  padding: 3px 8px;
+  font-size: 11.5px;
+  color: #667085;
+  background: #f2f3f5;
+  border-radius: 999px;
+}
+
+/* ---------- 난이도별 코스 ---------- */
+
+.lv-desc {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  background: var(--navy-soft);
+  border-radius: 8px;
+}
+
+.course-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.course-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 16px 40px 16px 16px;
   text-align: left;
   background: white;
   border: 1px solid #eee;
@@ -841,126 +1112,95 @@ select {
   cursor: pointer;
 }
 
-.home-card-icon {
-  width: 30px;
-  height: 30px;
-  margin-bottom: 8px;
-  color: var(--navy);
+.course-chips {
+  display: flex;
+  gap: 6px;
 }
 
-.home-card-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--navy);
-}
-
-.home-card-subtitle {
-  font-size: 12px;
-  color: #888;
-}
-
-.home-card-chevron {
-  position: absolute;
-  right: 14px;
-  bottom: 12px;
-  font-size: 22px;
-  line-height: 1;
-  color: var(--navy);
-}
-
-.home-card.disabled {
-  cursor: default;
-}
-
-.home-card.disabled .home-card-icon,
-.home-card.disabled .home-card-title {
-  color: #b5b5b5;
-}
-
-.home-card-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #888;
-  background: #f0f0f0;
-  border-radius: 999px;
-}
-
-/* 추천 코스 카드: 오른쪽 아래에 언덕 일러스트 */
-.recommend-card {
-  position: relative;
-  overflow: hidden;
-  padding: 18px;
-  background: white;
-  border: 1px solid #eee;
-  border-radius: 14px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-}
-
-.recommend-art {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 34%;
-  opacity: 0.9;
-  pointer-events: none;
-}
-
-.recommend-pill {
-  position: relative;
-  display: inline-block;
-  margin: 0 6px 8px 0;
+.lv-chip,
+.warn-chip {
   padding: 3px 10px;
   font-size: 12px;
   font-weight: 800;
+  border-radius: 999px;
+}
+
+.lv-chip.lv-1 {
+  color: var(--navy);
+  background: var(--navy-soft);
+}
+
+.lv-chip.lv-2 {
   color: var(--brand-text);
   background: var(--brand);
-  border-radius: 999px;
 }
 
-.recommend-badge {
-  position: relative;
-  display: inline-block;
-  margin-bottom: 8px;
-  padding: 3px 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: white;
+.lv-chip.lv-3 {
+  color: var(--brand);
   background: var(--navy);
-  border-radius: 999px;
 }
 
-.recommend-title {
-  position: relative;
-  margin: 0 0 4px;
-  font-size: 18px;
+.warn-chip {
+  font-weight: 700;
+  color: #b45309;
+  background: #fff4e5;
+}
+
+.course-title {
+  margin-top: 4px;
+  font-size: 17px;
   font-weight: 800;
   color: var(--navy);
 }
 
-.recommend-stats {
-  position: relative;
-  margin: 0 0 14px;
+.course-desc {
   font-size: 13px;
   color: #888;
 }
 
-.recommend-card .primary-btn {
-  position: relative;
+.course-meta {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.course-chev {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  color: var(--navy);
+}
+
+.make-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.make-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  background: #f7f7f8;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.make-btn .ic {
+  width: 24px;
+  height: 24px;
 }
 
 /* ---------- 내 리포트 화면 ---------- */
-
-.reports-screen {
-  position: fixed;
-  inset: 0;
-  overflow-y: auto;
-  background: #ffffff;
-  padding: 20px 20px 40px;
-}
 
 .filter-tabs {
   display: flex;
@@ -1415,14 +1655,6 @@ select {
 }
 
 /* 프로필 */
-.profile-screen {
-  position: fixed;
-  inset: 0;
-  overflow-y: auto;
-  background: #ffffff;
-  padding: 20px 20px 40px;
-}
-
 .profile-screen.hidden {
   display: none;
 }
