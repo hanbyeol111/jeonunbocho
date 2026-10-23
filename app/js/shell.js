@@ -353,7 +353,9 @@
     }
     pushBuffer();
   }
-  // 첫 화면 터치/클릭/키 입력 중 어느 것이든 먼저 오는 것으로 켠다. 이미 켜졌다면, 누를 때마다
+  // 첫 클릭/키 입력으로 켠다. (터치의 pointerup/touchend는 브라우저가 "사용자 조작"으로 인정하는 시점이
+  // 애매해서, 확실한 click만 쓴다. 이 기록이 인정받지 못하면 첫 뒤로가기에 앱이 그대로 꺼진다.)
+  // 이미 켜졌다면, 누를 때마다
   // "한 칸 앞 기록"이 아직 남아 있는지 보고 없으면 다시 채운다 (뒤로가기 직후 등).
   // 기록을 만드는 일은 사용자가 화면을 누르는 순간에 해야 브라우저가 인정하기 때문이다.
   function onUserInput() {
@@ -365,13 +367,13 @@
     }
     updateVersionLabel();
   }
-  for (const type of ["pointerup", "touchend", "click", "keydown"]) {
+  for (const type of ["click", "keydown"]) {
     document.addEventListener(type, onUserInput, { capture: true, passive: true });
   }
 
   // 프로필 맨 아래에 앱 버전과 뒤로가기 처리 상태를 작게 보여준다.
   // (새로고침했는데도 옛 버전이 남아 있는지, 뒤로가기 처리가 켜졌는지 확인하려는 용도)
-  const APP_VERSION = 21; // service-worker.js의 CACHE_NAME 번호와 같이 올린다
+  const APP_VERSION = 22; // service-worker.js의 CACHE_NAME 번호와 같이 올린다
   function updateVersionLabel() {
     $("app-version").textContent = `앱 버전 v${APP_VERSION} · 뒤로가기 처리 ${backArmed ? "켜짐" : "꺼짐"}`;
   }
