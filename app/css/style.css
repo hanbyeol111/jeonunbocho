@@ -1071,6 +1071,140 @@ select {
   border-radius: 12px;
 }
 
+/* ---------- 완주 화면 (노란 헤더 + 주행 리포트 + 오늘 배운 것) ---------- */
+
+.finish-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 30; /* 지도 시트(5), 주행 오버레이(12), 주의 배너(20)보다 위 */
+  overflow-y: auto;
+  background: #ffffff;
+  padding-bottom: 40px;
+}
+
+.finish-hero {
+  padding: 48px 24px 28px;
+  text-align: center;
+  background: var(--brand);
+  border-radius: 0 0 28px 28px;
+}
+
+.finish-car {
+  display: block;
+  width: 150px;
+  height: auto;
+  margin: 0 auto 10px;
+}
+
+.finish-hero h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.finish-hero p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--brand-text);
+}
+
+.finish-card {
+  margin: 16px 16px 0;
+  padding: 18px;
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.finish-card h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.finish-missions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.finish-missions li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.finish-check {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--brand);
+  background: var(--navy);
+  border-radius: 50%;
+}
+
+.finish-mission-label {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1c1c1e;
+}
+
+.finish-missions strong {
+  font-size: 14px;
+  color: var(--navy);
+}
+
+.finish-report-text {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f2;
+  font-size: 13px;
+  color: #666;
+}
+
+.learned-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.learned-title {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--brand-text);
+  background: #fffbd6;
+  border-radius: 999px;
+}
+
+.learned-list p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #555;
+}
+
+.finish-actions {
+  padding: 20px 16px 0;
+}
+
 /* ---------- 코스 안내(브리핑) 3칸 요약: 거리 / 시간 / 방향 ---------- */
 
 .brief-row {

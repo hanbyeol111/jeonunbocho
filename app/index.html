@@ -308,10 +308,6 @@
       <button id="briefing-start-btn" type="button" class="primary-btn">시작하기 <span aria-hidden="true">›</span></button>
     </section>
 
-    <section id="report-panel" class="sheet-section hidden">
-      <h2>주행 리포트</h2>
-      <p id="report-text"></p>
-    </section>
   </div>
 
   <!-- 실제 주행 중: 지도는 계속 보여주고, 그 위에 안내 배너/버튼/하단 바만 띄운다 (네이버지도 내비 스타일 참고) -->
@@ -341,6 +337,31 @@
         <span id="nav-summary" class="nav-summary"></span>
         <span id="nav-eta" class="nav-eta"></span>
       </div>
+    </div>
+  </div>
+
+  <!-- 완주 화면: 노란 헤더 + 주행 리포트 + 오늘 배운 것. 코스를 끝까지 달리면 지도 위를 덮는다. -->
+  <div id="report-panel" class="finish-screen hidden">
+    <div class="finish-hero">
+      <img class="finish-car" src="img/car.svg" alt="" />
+      <h1>코스 완주!</h1>
+      <p id="finish-sub"></p>
+    </div>
+
+    <div class="finish-card">
+      <h2>주행 리포트</h2>
+      <ul id="finish-missions" class="finish-missions"></ul>
+      <p id="report-text" class="finish-report-text"></p>
+    </div>
+
+    <div id="learned-card" class="finish-card hidden">
+      <h2>오늘 배운 것</h2>
+      <ul id="learned-list" class="learned-list"></ul>
+    </div>
+
+    <div class="finish-actions">
+      <button id="finish-home-btn" type="button" class="primary-btn">홈으로</button>
+      <button id="finish-reports-btn" type="button" class="secondary-btn">내 리포트 보기</button>
     </div>
   </div>
 

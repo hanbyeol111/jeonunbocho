@@ -480,6 +480,68 @@ function buildReport(guides = []) {
   return `오늘 좌회전 ${left}회, 우회전 ${right}회, 유턴 ${uturn}회를 완료했습니다 🏆`;
 }
 
+// ---------- 완주 화면 ----------
+
+const finishSub = document.getElementById("finish-sub");
+const finishMissions = document.getElementById("finish-missions");
+const learnedCard = document.getElementById("learned-card");
+const learnedList = document.getElementById("learned-list");
+
+/** 코스 이름/거리/시간, 이번 코스에 나온 요소별 횟수, 그리고 "오늘 배운 것"을 채운다. */
+function renderFinishScreen(guides, elapsedMin) {
+  const parts = [pendingTitle];
+  if (pendingSummary?.distanceKm != null) parts.push(`${pendingSummary.distanceKm}km`);
+  if (elapsedMin != null) parts.push(`${elapsedMin}분`);
+  finishSub.textContent = parts.filter(Boolean).join(" · ");
+
+  // 요소별 횟수 (0회인 줄은 숨긴다)
+  const rows = [
+    ["우회전", countGuidesByKeyword(guides, "우회전")],
+    ["좌회전", countGuidesByKeyword(guides, "좌회전")],
+    ["유턴", countGuidesByKeyword(guides, "유턴")],
+    ["회전교차로", countGuidesByKeyword(guides, "회전교차로")],
+    ["주의 구간 통과", findCautionGuides(guides).length],
+  ].filter(([, n]) => n > 0);
+
+  finishMissions.innerHTML = "";
+  rows.forEach(([label, n]) => {
+    const li = document.createElement("li");
+    const check = document.createElement("span");
+    check.className = "finish-check";
+    check.textContent = "✓";
+    const name = document.createElement("span");
+    name.className = "finish-mission-label";
+    name.textContent = label;
+    const count = document.createElement("strong");
+    count.textContent = label === "주의 구간 통과" ? `${n}곳` : `${n}회`;
+    li.append(check, name, count);
+    finishMissions.appendChild(li);
+  });
+
+  // 오늘 배운 것: 이번 코스에 실제로 나온 요소의 팁만. 차선 변경은 회전/유턴이 있었다면 함께 보여준다.
+  const kinds = new Set(guides.map(tipKindFor).filter(Boolean));
+  if (kinds.size > 0) kinds.add("차선변경");
+  learnedList.innerHTML = "";
+  window.LEARNED_ORDER.filter((k) => kinds.has(k)).forEach((k) => {
+    const tip = window.LEARNED_TIPS[k];
+    const li = document.createElement("li");
+    const title = document.createElement("span");
+    title.className = "learned-title";
+    title.textContent = tip.title;
+    const text = document.createElement("p");
+    text.textContent = tip.text;
+    li.append(title, text);
+    learnedList.appendChild(li);
+  });
+  learnedCard.classList.toggle("hidden", learnedList.children.length === 0);
+}
+
+document.getElementById("finish-home-btn").addEventListener("click", () => enterHomeScreen());
+document.getElementById("finish-reports-btn").addEventListener("click", () => {
+  enterHomeScreen();
+  document.getElementById("home-card-reports").click(); // js/shell.js가 내 리포트 화면을 연다
+});
+
 /**
  * 실시간 위치를 지켜보며:
  *  - 주의가 필요한 구간(비보호좌회전·회전교차로·유턴)에 가까워지면 배너/음성으로 미리 알린다.
@@ -544,11 +606,12 @@ function finishCourse(guides) {
   cautionBanner.classList.add("hidden");
   exitNavMode();
 
-  reportPanel.classList.remove("hidden");
   reportText.textContent = buildReport(guides);
   statusMsg.textContent = "코스 완주! 리포트를 확인하세요.";
   // 코스 이름·거리는 브리핑 때 정한 값, 걸린 시간은 실제로 주행을 시작한 뒤 흐른 시간이다.
   const elapsedMin = navStartedAt ? Math.max(1, Math.round((Date.now() - navStartedAt) / 60000)) : null;
+  renderFinishScreen(guides, elapsedMin);
+  reportPanel.classList.remove("hidden");
   saveReportToHistory(reportText.textContent, {
     title: pendingTitle,
     distanceKm: pendingSummary?.distanceKm ?? null,
