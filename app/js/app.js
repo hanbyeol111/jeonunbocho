@@ -837,6 +837,7 @@ function resetCourseState() {
 /** name: "destination" | "loop" | "element" - 지도 화면 하단 시트에 그 패널만 보이게 하고, 상단 바 제목도 맞춘다. */
 function showStartPanel(name) {
   resetCourseState();
+  setSheetCollapsed(false);
   Object.values(startTabPanels).forEach((panel) => panel.classList.add("hidden"));
   startTabPanels[name].classList.remove("hidden");
   startPanelTitle.textContent = startPanelTitles[name];
@@ -1129,6 +1130,7 @@ function renderBriefingMissions(guides) {
  * @returns guides - pendingGuides에 저장해둘 안내 지시사항 배열
  */
 function applyRouteToBriefing(route, rawPath, fallbackDistanceKm) {
+  setSheetCollapsed(false); // 코스 안내가 새로 뜨면 창을 펼쳐서 보여준다
   const totalDistanceKm = route.summary?.distance
     ? Number((route.summary.distance / 1000).toFixed(1))
     : fallbackDistanceKm;
@@ -1736,6 +1738,59 @@ lvSearchBtn.addEventListener("click", searchLevelCourses);
 document.getElementById("courses-make-dest").addEventListener("click", () => document.getElementById("home-card-destination").click());
 document.getElementById("courses-make-loop").addEventListener("click", () => document.getElementById("home-card-loop").click());
 document.getElementById("courses-make-element").addEventListener("click", () => document.getElementById("home-card-element").click());
+
+// ---------- 하단 창 내리기/올리기 ----------
+//
+// 코스 설정이나 코스 안내 창이 지도를 가려서 지도를 자세히 볼 수 없다는 요청으로 넣었다.
+//  - 창 맨 위 손잡이를 누르면 접고 펼친다. 위아래로 끌어도 된다.
+//  - 창 안 내용이 맨 위인 상태에서 아래로 쓸어내리면 창이 내려가고, 접힌 창을 위로 쓸어올리면 펼쳐진다.
+// 접힌 창에는 손잡이와 제목 줄만 남는다.
+
+function setSheetCollapsed(collapsed) {
+  bottomSheetEl.classList.toggle("collapsed", collapsed);
+}
+
+const sheetGrip = document.getElementById("sheet-grip");
+const SHEET_DRAG_PX = 30; // 이만큼 이상 움직이면 "끌었다"고 본다
+
+// 손잡이: 누르면 토글, 끌면 방향대로 접거나 편다 (마우스/터치 공통)
+let gripStartY = null;
+sheetGrip.addEventListener("pointerdown", (e) => {
+  gripStartY = e.clientY;
+  sheetGrip.setPointerCapture?.(e.pointerId);
+});
+sheetGrip.addEventListener("pointerup", (e) => {
+  if (gripStartY === null) return;
+  const dy = e.clientY - gripStartY;
+  gripStartY = null;
+  if (dy > SHEET_DRAG_PX) setSheetCollapsed(true);
+  else if (dy < -SHEET_DRAG_PX) setSheetCollapsed(false);
+  else setSheetCollapsed(!bottomSheetEl.classList.contains("collapsed")); // 그냥 눌렀을 때
+});
+sheetGrip.addEventListener("pointercancel", () => (gripStartY = null));
+
+// 창 본문: 맨 위에서 아래로 쓸면 접고, 접힌 상태에서 위로 쓸거나 누르면 편다
+let bodyStartY = null;
+bottomSheetEl.addEventListener("touchstart", (e) => {
+  bodyStartY = e.touches[0].clientY;
+}, { passive: true });
+bottomSheetEl.addEventListener("touchmove", (e) => {
+  if (bodyStartY === null) return;
+  const dy = e.touches[0].clientY - bodyStartY;
+  const collapsed = bottomSheetEl.classList.contains("collapsed");
+  if (!collapsed && bottomSheetEl.scrollTop <= 0 && dy > SHEET_DRAG_PX * 1.5) {
+    setSheetCollapsed(true);
+    bodyStartY = null;
+  } else if (collapsed && dy < -SHEET_DRAG_PX) {
+    setSheetCollapsed(false);
+    bodyStartY = null;
+  }
+}, { passive: true });
+bottomSheetEl.addEventListener("touchend", () => (bodyStartY = null));
+bottomSheetEl.addEventListener("click", (e) => {
+  // 접힌 창의 제목 줄을 누르면 펼친다 (손잡이는 위에서 따로 처리하므로 제외)
+  if (bottomSheetEl.classList.contains("collapsed") && !sheetGrip.contains(e.target)) setSheetCollapsed(false);
+});
 
 // 서비스워커 등록 (PWA 오프라인 지원)
 //

@@ -100,6 +100,7 @@ html, body {
 
 /* 지도 위에 떠 있는 하단 시트 */
 .bottom-sheet {
+  transition: transform 0.25s ease;
   position: fixed;
   left: 0;
   right: 0;
@@ -113,12 +114,26 @@ html, body {
   padding: 8px 20px 24px;
 }
 
+/* 손잡이 줄: 누르거나 위아래로 끌어서 창을 내리고 올린다 (터치 영역을 넉넉하게) */
+.sheet-grip {
+  margin: -8px -20px 6px;
+  padding: 14px 0 8px;
+  cursor: grab;
+  touch-action: none; /* 끄는 동안 브라우저가 화면을 스크롤하지 않게 */
+}
+
 .sheet-handle {
   width: 40px;
   height: 4px;
   border-radius: 2px;
   background: #ddd;
-  margin: 6px auto 14px;
+  margin: 0 auto;
+}
+
+/* 접힌 상태: 손잡이와 제목 줄만 남기고 아래로 내려 지도를 크게 보여준다 */
+.bottom-sheet.collapsed {
+  transform: translateY(calc(100% - 76px));
+  overflow: hidden;
 }
 
 .sheet-section h2 {
