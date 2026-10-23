@@ -328,9 +328,18 @@
   const exitDialog = $("exit-dialog");
   const confirmDialog = $("confirm-dialog");
 
+  // 우리가 만든 "한 칸 앞 기록"이 지금 몇 칸째인지 (맨 처음 기록이면 0). 종료할 때 되돌아갈 칸 수에 쓴다.
+  function bufferDepth() {
+    return history.state && history.state.jbc === "buffer" ? history.state.n : 0;
+  }
+
+  // 뒤로가기를 처리한 직후 다시 채운 기록은 "사용자가 누른 순간"에 만든 게 아니라서, 브라우저에 따라 뒤로가기를
+  // 누를 때 건너뛰는 기록으로 분류될 수 있다. 그래서 그다음 터치 때 한 칸을 더 만들어 둔다.
+  let freshNeeded = false;
+
   function pushBuffer() {
     try {
-      history.pushState({ jbc: "buffer" }, "");
+      history.pushState({ jbc: "buffer", n: bufferDepth() + 1 }, "");
     } catch {
       /* 기록을 못 만드는 환경이면 뒤로가기는 브라우저 기본 동작대로 간다 */
     }
@@ -346,8 +355,29 @@
     }
     pushBuffer();
   }
-  document.addEventListener("pointerup", armBackButton, { once: true, capture: true });
-  document.addEventListener("keydown", armBackButton, { once: true, capture: true });
+  // 첫 화면 터치/클릭/키 입력 중 어느 것이든 먼저 오는 것으로 켠다. 이미 켜졌다면, 누를 때마다
+  // "한 칸 앞 기록"이 아직 남아 있는지 보고 없으면 다시 채운다 (뒤로가기 직후 등).
+  // 기록을 만드는 일은 사용자가 화면을 누르는 순간에 해야 브라우저가 인정하기 때문이다.
+  function onUserInput() {
+    if (!backArmed) {
+      armBackButton();
+    } else if (!exiting && !exitDialog.open && (freshNeeded || bufferDepth() === 0)) {
+      pushBuffer();
+      freshNeeded = false;
+    }
+    updateVersionLabel();
+  }
+  for (const type of ["pointerup", "touchend", "click", "keydown"]) {
+    document.addEventListener(type, onUserInput, { capture: true, passive: true });
+  }
+
+  // 프로필 맨 아래에 앱 버전과 뒤로가기 처리 상태를 작게 보여준다.
+  // (새로고침했는데도 옛 버전이 남아 있는지, 뒤로가기 처리가 켜졌는지 확인하려는 용도)
+  const APP_VERSION = 20; // service-worker.js의 CACHE_NAME 번호와 같이 올린다
+  function updateVersionLabel() {
+    $("app-version").textContent = `앱 버전 v${APP_VERSION} · 뒤로가기 처리 ${backArmed ? "켜짐" : "꺼짐"}`;
+  }
+  updateVersionLabel();
 
   /** 껍데기 화면에서 한 단계 뒤로. 처리했으면 true, 맨 처음 화면이라 더 갈 곳이 없으면 false. */
   function shellBack() {
@@ -387,7 +417,10 @@
     } catch {
       /* 닫을 수 없는 창이면 무시 */
     }
-    history.back(); // 이전 페이지가 있으면(브라우저 탭) 그쪽으로 나간다
+    // 우리가 만든 기록을 전부 거슬러 올라가 맨 처음 기록까지 간다. 이전 페이지가 있으면(브라우저 탭) 그쪽으로 나간다.
+    const depth = bufferDepth();
+    if (depth > 0) history.go(-depth);
+    else history.back();
     setTimeout(() => {
       // 아직 살아 있으면 웹페이지가 스스로 끌 수 없는 환경이다.
       $("exit-dialog-text").textContent = "화면 밖으로 나가려면 휴대폰 뒤로가기를 한 번 더 눌러주세요.";
@@ -415,20 +448,24 @@
 
   window.addEventListener("popstate", () => {
     if (!backArmed || exiting) return; // 종료 중이면 막지 않는다
+    if (exitDialog.open) return; // 종료 확인 창이 떠 있는 동안의 뒤로가기는 막지 않는다 (한 번 더 누르면 나간다)
 
     // 열려 있는 창이 있으면 그것부터 닫는다
     if (confirmDialog.open) {
       confirmDialog.querySelector("#confirm-cancel-btn").click();
       pushBuffer();
+      freshNeeded = true;
       return;
     }
     // 지도 화면 쪽(app.js)이 먼저 처리할 기회를 준다
     if (typeof window.Shell.onBack === "function" && window.Shell.onBack()) {
       pushBuffer();
+      freshNeeded = true;
       return;
     }
     if (shellBack()) {
       pushBuffer();
+      freshNeeded = true;
       return;
     }
     // 더 갈 곳이 없는 맨 처음 화면(홈/로그인): 종료할지 묻는다

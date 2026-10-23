@@ -2189,6 +2189,13 @@ select {
   color: #999;
 }
 
+.app-version {
+  margin: 16px 0 0;
+  font-size: 11px;
+  text-align: center;
+  color: #b0b3bd;
+}
+
 .profile-login-btn {
   margin-top: 22px;
 }
