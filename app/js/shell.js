@@ -319,13 +319,11 @@
   //
   // 주의: 사용자가 화면을 한 번이라도 눌러야 브라우저가 이 기록을 인정한다(크롬 정책). 그래서 첫 터치 때 만든다.
   //
-  // 앱 종료: 웹페이지는 스스로 앱을 끌 수 없다. "종료"를 누르면 window.close()와 한 번 더 뒤로가기를
-  // 시도하고, 그래도 안 꺼지면 "뒤로가기를 한 번 더 누르세요"라고 알려 준다. 이때는 한 칸 앞 기록을
-  // 다시 채우지 않아서 그 뒤로가기가 그대로 앱을 나간다.
+  // 앱 종료: 홈/로그인에서 뒤로가기를 누르면 경고 없이 나간다. 웹페이지는 스스로 앱을 끌 수 없어서
+  // window.close()와 한 번 더 뒤로가기를 시도하고, 그래도 안 꺼지면 휴대폰 뒤로가기를 한 번 더 눌러야 한다.
 
   let backArmed = false;
   let exiting = false;
-  const exitDialog = $("exit-dialog");
   const confirmDialog = $("confirm-dialog");
 
   // 우리가 만든 "한 칸 앞 기록"이 지금 몇 칸째인지 (맨 처음 기록이면 0). 종료할 때 되돌아갈 칸 수에 쓴다.
@@ -361,7 +359,7 @@
   function onUserInput() {
     if (!backArmed) {
       armBackButton();
-    } else if (!exiting && !exitDialog.open && (freshNeeded || bufferDepth() === 0)) {
+    } else if (!exiting && (freshNeeded || bufferDepth() === 0)) {
       pushBuffer();
       freshNeeded = false;
     }
@@ -373,7 +371,7 @@
 
   // 프로필 맨 아래에 앱 버전과 뒤로가기 처리 상태를 작게 보여준다.
   // (새로고침했는데도 옛 버전이 남아 있는지, 뒤로가기 처리가 켜졌는지 확인하려는 용도)
-  const APP_VERSION = 20; // service-worker.js의 CACHE_NAME 번호와 같이 올린다
+  const APP_VERSION = 21; // service-worker.js의 CACHE_NAME 번호와 같이 올린다
   function updateVersionLabel() {
     $("app-version").textContent = `앱 버전 v${APP_VERSION} · 뒤로가기 처리 ${backArmed ? "켜짐" : "꺼짐"}`;
   }
@@ -392,40 +390,6 @@
     }
     return false;
   }
-
-  /** 앱 종료 확인 창. 열려 있는 동안에는 한 칸 앞 기록이 없어서, 뒤로가기를 한 번 더 누르면 그대로 나간다. */
-  function openExitDialog() {
-    if (exitDialog.open) return;
-    $("exit-dialog-text").textContent = '종료하려면 "종료"를 눌러주세요.';
-    exitDialog.showModal();
-  }
-
-  function closeExitDialog() {
-    if (exitDialog.open) exitDialog.close();
-    pushBuffer(); // 취소했으니 다음 뒤로가기도 다시 가로챌 수 있게 한 칸을 채운다
-  }
-
-  $("exit-cancel-btn").addEventListener("click", closeExitDialog);
-  exitDialog.addEventListener("cancel", (e) => {
-    e.preventDefault();
-    closeExitDialog();
-  });
-  $("exit-ok-btn").addEventListener("click", () => {
-    exiting = true;
-    try {
-      window.close(); // 설치형 앱에서는 이것만으로 꺼지기도 한다
-    } catch {
-      /* 닫을 수 없는 창이면 무시 */
-    }
-    // 우리가 만든 기록을 전부 거슬러 올라가 맨 처음 기록까지 간다. 이전 페이지가 있으면(브라우저 탭) 그쪽으로 나간다.
-    const depth = bufferDepth();
-    if (depth > 0) history.go(-depth);
-    else history.back();
-    setTimeout(() => {
-      // 아직 살아 있으면 웹페이지가 스스로 끌 수 없는 환경이다.
-      $("exit-dialog-text").textContent = "화면 밖으로 나가려면 휴대폰 뒤로가기를 한 번 더 눌러주세요.";
-    }, 500);
-  });
 
   /** 확인 창을 띄우고 눌린 답(true/false)을 돌려준다. 주행 중단 확인에 쓴다. */
   function askConfirm({ title, text, ok }) {
@@ -448,7 +412,6 @@
 
   window.addEventListener("popstate", () => {
     if (!backArmed || exiting) return; // 종료 중이면 막지 않는다
-    if (exitDialog.open) return; // 종료 확인 창이 떠 있는 동안의 뒤로가기는 막지 않는다 (한 번 더 누르면 나간다)
 
     // 열려 있는 창이 있으면 그것부터 닫는다
     if (confirmDialog.open) {
@@ -468,8 +431,14 @@
       freshNeeded = true;
       return;
     }
-    // 더 갈 곳이 없는 맨 처음 화면(홈/로그인): 종료할지 묻는다
-    openExitDialog();
+    // 더 갈 곳이 없는 맨 처음 화면(홈/로그인): 경고 없이 그대로 앱을 나간다
+    exiting = true;
+    try {
+      window.close(); // 설치형 앱에서는 이것만으로 꺼지기도 한다
+    } catch {
+      /* 닫을 수 없는 창이면 무시 */
+    }
+    history.back(); // 이전 페이지가 있으면(브라우저 탭) 그쪽으로 나간다. 맨 처음 기록이면 휴대폰 뒤로가기가 한 번 더 필요할 수 있다
   });
 
   // ---------- 시작 ----------
