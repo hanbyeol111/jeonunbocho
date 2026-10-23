@@ -19,6 +19,8 @@
 let map = null;
 let currentPosition = null; // { lat, lng }
 let currentMarker = null; // 현재 위치 마커 (재사용)
+let followMe = false; // 주행 중 지도가 내 위치를 따라가는지 ("내 위치로" 버튼을 누르면 다시 켜진다)
+const NAV_MAP_LEVEL = 3; // 주행 화면 지도 확대 단계 (숫자가 작을수록 가까움)
 
 // ---------- 1. 지도 초기화 ----------
 
@@ -33,6 +35,10 @@ function initMap(lat, lng) {
   if (!map) {
     const container = document.getElementById("map");
     map = new kakao.maps.Map(container, { center, level: 5 });
+    // 주행 중에 지도를 손으로 끌어서 다른 곳을 보고 있으면, 내 위치를 따라 지도가 움직이지 않게 한다.
+    kakao.maps.event.addListener(map, "dragstart", () => {
+      if (!navScreen.classList.contains("hidden")) followMe = false;
+    });
   } else {
     map.setCenter(center);
   }
@@ -536,12 +542,20 @@ function enterNavMode(origin, guides, arrivalPoint = origin, summary = null) {
   appHeader.classList.add("hidden");
   bottomSheetEl.classList.add("hidden");
   navScreen.classList.remove("hidden");
+
+  // 코스 전체가 보이던 넓은 지도에서, 내 위치 근처가 크게 보이는 가까운 지도로 바로 바꾼다.
+  followMe = true;
+  if (map) {
+    map.setLevel(NAV_MAP_LEVEL);
+    map.setCenter(new kakao.maps.LatLng(origin.lat, origin.lng));
+  }
   updateNavDisplay(origin, guides); // 첫 화면을 바로 채워둔다 (다음 GPS 업데이트를 기다리지 않고)
 
   startDriveMonitoring(origin, guides, arrivalPoint);
 }
 
 function exitNavMode() {
+  followMe = false;
   hideCautionModal();
   navScreen.classList.add("hidden");
   appHeader.classList.remove("hidden");
@@ -677,6 +691,13 @@ function startDriveMonitoring(origin, guides, arrivalPoint = origin) {
   watchId = navigator.geolocation.watchPosition(
     (pos) => {
       const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+      // 내 위치 마커를 움직이고, 따라가기가 켜져 있으면 지도도 같이 옮긴다.
+      if (map && currentMarker) {
+        const point = new kakao.maps.LatLng(here.lat, here.lng);
+        currentMarker.setPosition(point);
+        if (followMe) map.setCenter(point);
+      }
 
       tipGuides.forEach(({ guide, kind }, idx) => {
         const turnKey = `${idx}:turn`;
@@ -896,6 +917,7 @@ navZoomOutBtn.addEventListener("click", () => {
 });
 
 navRecenterBtn.addEventListener("click", () => {
+  followMe = true; // 다시 내 위치를 따라가게 한다
   if (map && lastKnownPosition) {
     map.setCenter(new kakao.maps.LatLng(lastKnownPosition.lat, lastKnownPosition.lng));
   }
