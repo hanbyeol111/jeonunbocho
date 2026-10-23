@@ -81,7 +81,7 @@ html, body {
 
 .caution-banner {
   position: fixed;
-  top: 130px; /* 주행 중엔 그 위의 .nav-top-banner(두 줄짜리라 더 높다)를 가리지 않게 아래로 */
+  top: 240px; /* 주행 중엔 그 위의 안내 카드(.nav-card)와 "그 다음" 칩을 가리지 않게 아래로 */
   left: 16px;
   right: 16px;
   z-index: 20; /* 주행 오버레이(.nav-overlay, z-index 12)보다도 위에 떠야 한다 */
@@ -393,9 +393,9 @@ select {
   display: none;
 }
 
-/* ---------- 실주행 화면 (지도를 계속 보여주면서 그 위에 얹는 오버레이) ----------
-   네이버지도 내비 화면 구조 참고: 상단 큰 안내 배너 + 오른쪽 확대/축소 +
-   가운데 아래 "내 위치로" + 얇은 하단 바. 지도를 가리는 큰 패널은 쓰지 않는다. */
+/* ---------- 실주행 화면 B (지도를 계속 보여주면서 그 위에 얹는 오버레이) ----------
+   상단 남색 안내 카드(회전 아이콘 · 거리 · 지금 할 일) + 그 다음 안내 + 오른쪽 확대/축소 +
+   하단 진행 카드. 지도를 가리는 큰 패널은 쓰지 않는다. */
 
 .nav-overlay {
   position: fixed;
@@ -408,48 +408,134 @@ select {
   display: none;
 }
 
-.nav-top-banner {
+.nav-card {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  right: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
-  background: var(--navy);
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  overflow: hidden;
   color: white;
-  border-radius: 14px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  background: var(--navy);
+  border-radius: 22px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   pointer-events: auto;
 }
 
-.nav-arrow-icon {
-  flex-shrink: 0;
-  font-size: 34px;
-  line-height: 1;
-  transition: transform 0.3s ease;
+.nav-card-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px 14px;
 }
 
-.nav-top-text {
+.nav-icon-box {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  color: var(--navy);
+  background: var(--brand);
+  border-radius: 18px;
+}
+
+.nav-icon-box svg {
+  width: 44px;
+  height: 44px;
+}
+
+.nav-card-text {
   min-width: 0;
 }
 
 .nav-headline {
-  margin: 0;
-  font-size: 22px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.nav-dist {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.nav-label {
+  font-size: 21px;
   font-weight: 800;
 }
 
-.nav-instruction-sub {
-  margin: 2px 0 0;
-  font-size: 13px;
+.nav-sub {
+  margin: 4px 0 0;
+  font-size: 13.5px;
   color: #b7bdd6;
+}
+
+.nav-card-prep {
+  padding: 12px 18px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nav-prep-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-prep-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--brand);
+}
+
+.nav-early {
+  font-size: 11.5px;
+  color: #8f96b3;
+}
+
+.nav-prep-text {
+  margin: 4px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.nav-next-chip {
+  position: absolute;
+  top: 196px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  background: white;
+  border-radius: 999px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  pointer-events: auto;
+}
+
+.nav-next-chip.hidden {
+  display: none;
+}
+
+.nav-next-tag {
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 800;
+  color: white;
+  background: var(--navy);
+  border-radius: 999px;
 }
 
 .nav-side-controls {
   position: absolute;
-  right: 16px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -459,13 +545,13 @@ select {
 }
 
 .nav-side-btn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: none;
   background: white;
   color: var(--navy);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   cursor: pointer;
@@ -474,7 +560,7 @@ select {
 .nav-recenter-btn {
   position: absolute;
   left: 50%;
-  bottom: 96px;
+  bottom: 130px;
   transform: translateX(-50%);
   padding: 8px 16px;
   font-size: 13px;
@@ -488,50 +574,172 @@ select {
   pointer-events: auto;
 }
 
-.nav-bottom-bar {
+.nav-bottom-card {
   position: absolute;
-  left: 16px;
-  right: 16px;
+  left: 12px;
+  right: 12px;
   bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  padding: 14px 16px;
   background: white;
-  border-radius: 14px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   pointer-events: auto;
 }
 
+.nav-progress {
+  height: 6px;
+  overflow: hidden;
+  background: #f2f3f5;
+  border-radius: 999px;
+}
+
+.nav-progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--brand);
+  border-radius: 999px;
+  transition: width 0.6s;
+}
+
+.nav-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
 .nav-bottom-icon-btn {
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  flex: none;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: none;
   background: #f2f3f5;
   color: #555;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
 }
 
 .nav-bottom-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
 .nav-summary {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   color: var(--navy);
 }
 
 .nav-eta {
+  overflow: hidden;
+  font-size: 12px;
+  color: #888;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voice-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--navy);
+  background: var(--navy-soft);
+  border-radius: 999px;
+}
+
+.voice-dot {
+  width: 7px;
+  height: 7px;
+  background: #43a047;
+  border-radius: 50%;
+}
+
+/* ---------- 주의 구간 팝업 ---------- */
+
+.caution-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 18, 30, 0.45);
+}
+
+.caution-modal.hidden {
+  display: none;
+}
+
+.caution-modal-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 26px 22px 20px;
+  text-align: center;
+  background: white;
+  border-radius: 22px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
+}
+
+.caution-modal-ic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 14px;
+  background: #fff4e5;
+  border-radius: 50%;
+}
+
+.caution-modal-ic span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  font-size: 22px;
+  font-weight: 800;
+  color: white;
+  background: #ff9500;
+  border-radius: 50%;
+}
+
+.caution-modal-dist {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #b45309;
+  background: #fff4e5;
+  border-radius: 999px;
+}
+
+.caution-modal-card h3 {
+  margin: 10px 0 8px;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.caution-modal-card p {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #555;
+}
+
+.caution-modal-card .caution-modal-note {
+  margin-bottom: 14px;
   font-size: 12px;
   color: #888;
 }
-
 
 /* ---------- 시작 패널 (목적지 지정 / 순환코스 - 홈 카드가 고른 하나만 보인다) ---------- */
 

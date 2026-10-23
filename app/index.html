@@ -376,14 +376,27 @@
 
   <!-- 실제 주행 중: 지도는 계속 보여주고, 그 위에 안내 배너/버튼/하단 바만 띄운다 (네이버지도 내비 스타일 참고) -->
   <div id="nav-screen" class="nav-overlay hidden">
-    <!-- 상단 안내 배너: 회전 아이콘 + 거리 + 방향, 그 아래 작은 글씨로 상세 안내 -->
-    <div class="nav-top-banner">
-      <span id="nav-big-arrow" class="nav-arrow-icon">⬆</span>
-      <div class="nav-top-text">
-        <p class="nav-headline"><span id="nav-distance">-- m</span> <span id="nav-turn-label"></span></p>
-        <p id="nav-instruction" class="nav-instruction-sub"></p>
+    <!-- 상단 안내 카드: 큰 회전 아이콘 + 거리 + 방향, 그 아래 "지금 할 일" -->
+    <div class="nav-card">
+      <div class="nav-card-main">
+        <div class="nav-icon-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <path id="nav-icon-a" d="M12 20V5" /><path id="nav-icon-b" d="M7 10l5-5 5 5" />
+          </svg>
+        </div>
+        <div class="nav-card-text">
+          <div class="nav-headline"><span id="nav-distance" class="nav-dist">-- m</span><span id="nav-turn-label" class="nav-label"></span></div>
+          <p id="nav-guide-text" class="nav-sub"></p>
+        </div>
+      </div>
+      <div class="nav-card-prep">
+        <div class="nav-prep-head"><span class="nav-prep-title">지금 할 일</span><span id="nav-early" class="nav-early"></span></div>
+        <p id="nav-instruction" class="nav-prep-text"></p>
       </div>
     </div>
+
+    <!-- 그 다음 안내 -->
+    <div id="nav-next-chip" class="nav-next-chip hidden"><span class="nav-next-tag">그 다음</span><span id="nav-next-text"></span></div>
 
     <!-- 오른쪽 확대/축소 -->
     <div class="nav-side-controls">
@@ -394,13 +407,29 @@
     <!-- 내 위치로 재중심 -->
     <button id="nav-recenter-btn" type="button" class="nav-recenter-btn">◎ 내 위치로</button>
 
-    <!-- 하단 바: 남은 거리/도착 예정 + 종료 버튼 (창처럼 크게 뜨지 않고 얇게) -->
-    <div class="nav-bottom-bar">
-      <button id="nav-stop-btn" type="button" class="nav-bottom-icon-btn" aria-label="주행 중단">✕</button>
-      <div class="nav-bottom-info">
-        <span id="nav-summary" class="nav-summary"></span>
-        <span id="nav-eta" class="nav-eta"></span>
+    <!-- 하단 카드: 진행 막대 + 남은 거리/시간 + 종료 -->
+    <div class="nav-bottom-card">
+      <div class="nav-progress"><div id="nav-progress-fill" class="nav-progress-fill"></div></div>
+      <div class="nav-bottom-row">
+        <button id="nav-stop-btn" type="button" class="nav-bottom-icon-btn" aria-label="주행 중단">✕</button>
+        <div class="nav-bottom-info">
+          <span id="nav-summary" class="nav-summary"></span>
+          <span id="nav-eta" class="nav-eta"></span>
+        </div>
+        <span class="voice-pill"><span class="voice-dot"></span>음성 안내</span>
       </div>
+    </div>
+  </div>
+
+  <!-- 주의 구간 팝업: 비보호 좌회전 · 회전교차로 · 유턴 150m 전에 뜬다. 눌러서 닫지 않아도 몇 초 뒤에 저절로 닫힌다. -->
+  <div id="caution-modal" class="caution-modal hidden">
+    <div class="caution-modal-card">
+      <div class="caution-modal-ic"><span>!</span></div>
+      <span id="caution-modal-dist" class="caution-modal-dist"></span>
+      <h3 id="caution-modal-title"></h3>
+      <p id="caution-modal-text"></p>
+      <p class="caution-modal-note">음성으로도 안내하고 있어요 · 화면은 보지 않아도 돼요</p>
+      <button id="caution-modal-ok" type="button" class="primary-btn">확인</button>
     </div>
   </div>
 

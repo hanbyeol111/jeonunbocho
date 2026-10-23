@@ -346,20 +346,48 @@ function showCaution(banner, speech = banner, ms = 6000) {
   cautionBanner.textContent = `⚠️ ${banner}`;
   cautionBanner.classList.remove("hidden");
 
-  if ("speechSynthesis" in window) {
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(speech);
-      utterance.lang = "ko-KR";
-      window.speechSynthesis.speak(utterance);
-    } catch (err) {
-      console.warn("음성 안내 실패:", err);
-    }
-  }
+  speakText(speech);
 
   clearTimeout(cautionHideTimer);
   cautionHideTimer = setTimeout(() => cautionBanner.classList.add("hidden"), ms);
 }
+
+/** 한국어 음성으로 읽는다. 아직 읽고 있던 이전 음성은 끊는다. */
+function speakText(text) {
+  if (!("speechSynthesis" in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "ko-KR";
+    window.speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.warn("음성 안내 실패:", err);
+  }
+}
+
+// ---------- 주의 구간 팝업 ----------
+
+const MODAL_KINDS = ["비보호", "회전교차로", "유턴"]; // 이 구간은 배너 대신 팝업으로 알린다
+const cautionModal = document.getElementById("caution-modal");
+let cautionModalTimer = null;
+
+function hideCautionModal() {
+  clearTimeout(cautionModalTimer);
+  cautionModal.classList.add("hidden");
+}
+
+/** 주의 구간 팝업. 운전 중에 누르지 않아도 되도록 8초 뒤에 저절로 닫힌다. */
+function showCautionModal(kind, distM) {
+  const tip = window.DRIVING_TIPS[kind];
+  document.getElementById("caution-modal-dist").textContent = `${Math.round(distM)}m 앞`;
+  document.getElementById("caution-modal-title").textContent = `잠시 후 ${window.LEARNED_TIPS[kind]?.title ?? kind} 구간`;
+  document.getElementById("caution-modal-text").textContent = tip.banner;
+  cautionModal.classList.remove("hidden");
+  speakText(tip.speech);
+  clearTimeout(cautionModalTimer);
+  cautionModalTimer = setTimeout(hideCautionModal, 8000);
+}
+document.getElementById("caution-modal-ok").addEventListener("click", hideCautionModal);
 
 // ---------- 주행 중 운전 팁 (js/tips.js의 문구를 쓴다) ----------
 
@@ -372,14 +400,6 @@ function tipKindFor(guide) {
 }
 
 // ---------- 실주행 화면 (다음 안내 방향/거리를 실시간으로 보여주는 전용 화면) ----------
-
-/** 안내 문구에서 회전 방향을 읽어, 화살표를 얼마나 돌릴지(deg)와 함께 돌려준다. */
-function guideTurnGlyph(guidance = "") {
-  if (guidance.includes("유턴")) return { angle: 180 };
-  if (guidance.includes("좌회전")) return { angle: -90 };
-  if (guidance.includes("우회전")) return { angle: 90 };
-  return { angle: 0 }; // 직진 · 경유지 · 목적지 등은 위쪽 화살표 그대로
-}
 
 /** 안내 배너에 쓸 짧은 방향 단어. 네이버지도처럼 "104m 우회전" 식으로 짧게 붙인다. */
 function guideShortLabel(guide) {
@@ -412,7 +432,32 @@ let navGuideIndex = 1; // 0번 = "출발지"라서 건너뛰고 시작한다
 let lastKnownPosition = null; // "내 위치로" 버튼이 쓸, 가장 최근 GPS 위치
 let navStartedAt = null; // 주행을 시작한 시각(ms) - 완주했을 때 실제 걸린 시간을 계산한다
 
-/** 현재 위치 기준으로 다음 안내 지점을 찾아 화면(화살표/거리/문구)을 갱신한다. */
+// 회전 종류별 아이콘 (SVG path 두 개)
+const NAV_ICONS = {
+  right: ["M7 20v-8a4 4 0 0 1 4-4h8", "M15 4l4 4-4 4"],
+  left: ["M17 20v-8a4 4 0 0 0-4-4H5", "M9 4L5 8l4 4"],
+  uturn: ["M7 20V10a5 5 0 0 1 10 0v9", "M13.5 15.5L17 19l3.5-3.5"],
+  straight: ["M12 20V5", "M7 10l5-5 5 5"],
+  arrive: ["M12 21s-6-5.2-6-10a6 6 0 1 1 12 0c0 4.8-6 10-6 10z", "M12 9v4"],
+};
+
+function navIconKey(guide) {
+  const g = guide.guidance || "";
+  if (guide.type === 101 || guide.type === 1000) return "arrive";
+  if (g.includes("유턴")) return "uturn";
+  if (g.includes("좌회전")) return "left";
+  if (g.includes("우회전")) return "right";
+  return "straight";
+}
+
+function formatDistance(m) {
+  return m >= 1000 ? `${(m / 1000).toFixed(1)}km` : `${Math.round(m)}m`;
+}
+
+let navTotalM = 0; // 코스 전체 거리(m). 진행 막대와 남은 거리 계산의 기준
+let navTotalMin = null; // 코스 전체 예상 시간(분)
+
+/** 현재 위치 기준으로 다음 안내 지점을 찾아 화면(아이콘/거리/문구/남은 거리)을 갱신한다. */
 function updateNavDisplay(here, guides) {
   lastKnownPosition = here;
   if (!guides.length) return;
@@ -427,11 +472,48 @@ function updateNavDisplay(here, guides) {
     dist = distanceMeters(here.lat, here.lng, target.y, target.x);
   }
 
-  const { angle } = guideTurnGlyph(target.guidance);
-  navBigArrow.style.transform = `rotate(${angle}deg)`;
-  navDistance.textContent = `${Math.round(dist)}m`;
+  const [iconA, iconB] = NAV_ICONS[navIconKey(target)];
+  navIconA.setAttribute("d", iconA);
+  navIconB.setAttribute("d", iconB);
+  navDistance.textContent = formatDistance(dist);
   navTurnLabel.textContent = guideShortLabel(target);
+  navGuideText.textContent = target.guidance || "";
   navInstruction.textContent = guideInstructionText(target);
+  navEarly.textContent = `${LANE_TIP_RADIUS_M}m 전부터 미리 안내`;
+
+  // 그 다음 안내: 지금 안내 지점에서 다음 지점까지의 거리
+  const next = guides[navGuideIndex + 1];
+  if (next) {
+    const gap = Number(next.distance) > 0 ? Number(next.distance) : distanceMeters(target.y, target.x, next.y, next.x);
+    navNextText.textContent = `${guideShortLabel(next)} · ${formatDistance(gap)}`;
+    navNextChip.classList.remove("hidden");
+  } else {
+    navNextChip.classList.add("hidden");
+  }
+
+  // 남은 거리/시간/진행률. 경로 응답의 구간 거리(guide.distance)를 더해서 구한다.
+  const hasSegments = guides.some((g) => Number(g.distance) > 0);
+  let remainM;
+  let progress;
+  if (hasSegments && navTotalM > 0) {
+    const after = guides.slice(navGuideIndex + 1).reduce((sum, g) => sum + (Number(g.distance) || 0), 0);
+    remainM = dist + after;
+    progress = Math.min(1, Math.max(0, 1 - remainM / navTotalM));
+  } else {
+    progress = guides.length > 1 ? navGuideIndex / (guides.length - 1) : 0;
+    remainM = navTotalM * (1 - progress);
+  }
+  const remainMin = navTotalMin != null ? Math.max(1, Math.round(navTotalMin * (1 - progress))) : null;
+  navSummary.textContent = `${(remainM / 1000).toFixed(1)}km${remainMin != null ? ` · ${remainMin}분` : ""}`;
+  if (remainMin != null) {
+    const eta = new Date(Date.now() + remainMin * 60 * 1000);
+    const hh = String(eta.getHours()).padStart(2, "0");
+    const mm = String(eta.getMinutes()).padStart(2, "0");
+    navEta.textContent = `${pendingTitle ? `${pendingTitle} · ` : ""}도착 ${hh}:${mm}`;
+  } else {
+    navEta.textContent = pendingTitle;
+  }
+  navProgressFill.style.width = `${Math.round(progress * 100)}%`;
 }
 
 /**
@@ -447,27 +529,20 @@ function updateNavDisplay(here, guides) {
 function enterNavMode(origin, guides, arrivalPoint = origin, summary = null) {
   navGuideIndex = 1;
   navStartedAt = Date.now();
+  // 전체 거리/시간: 구간 거리의 합을 우선 쓰고, 없으면 브리핑에서 계산해 둔 값을 쓴다.
+  const segSum = guides.reduce((sum, g) => sum + (Number(g.distance) || 0), 0);
+  navTotalM = segSum > 0 ? segSum : (summary?.distanceKm ?? 0) * 1000;
+  navTotalMin = summary?.durationMin ?? null;
   appHeader.classList.add("hidden");
   bottomSheetEl.classList.add("hidden");
   navScreen.classList.remove("hidden");
   updateNavDisplay(origin, guides); // 첫 화면을 바로 채워둔다 (다음 GPS 업데이트를 기다리지 않고)
 
-  if (summary) {
-    navSummary.textContent = `${summary.distanceKm}km${summary.durationMin != null ? ` · 약 ${summary.durationMin}분` : ""}`;
-    if (summary.durationMin != null) {
-      const eta = new Date(Date.now() + summary.durationMin * 60 * 1000);
-      const hh = String(eta.getHours()).padStart(2, "0");
-      const mm = String(eta.getMinutes()).padStart(2, "0");
-      navEta.textContent = `도착 예정 ${hh}:${mm}`;
-    } else {
-      navEta.textContent = "";
-    }
-  }
-
   startDriveMonitoring(origin, guides, arrivalPoint);
 }
 
 function exitNavMode() {
+  hideCautionModal();
   navScreen.classList.add("hidden");
   appHeader.classList.remove("hidden");
   bottomSheetEl.classList.remove("hidden");
@@ -613,8 +688,12 @@ function startDriveMonitoring(origin, guides, arrivalPoint = origin) {
           // 300m 팁을 못 받고 바로 150m 안으로 들어왔어도(GPS 튐 등) 차선 팁은 건너뛴다.
           triggered.add(turnKey);
           triggered.add(laneKey);
-          const tip = window.DRIVING_TIPS[kind];
-          showCaution(tip.banner, tip.speech);
+          if (MODAL_KINDS.includes(kind)) {
+            showCautionModal(kind, d);
+          } else {
+            const tip = window.DRIVING_TIPS[kind];
+            showCaution(tip.banner, tip.speech);
+          }
         } else if (d <= LANE_TIP_RADIUS_M && !triggered.has(laneKey)) {
           triggered.add(laneKey);
           // 전체 방법은 코스에서 처음 한 번만 읽어 주고, 그 뒤로는 짧게 알려준다.
@@ -790,7 +869,13 @@ const reportPanel = document.getElementById("report-panel");
 const reportText = document.getElementById("report-text");
 
 const navScreen = document.getElementById("nav-screen");
-const navBigArrow = document.getElementById("nav-big-arrow");
+const navIconA = document.getElementById("nav-icon-a");
+const navIconB = document.getElementById("nav-icon-b");
+const navGuideText = document.getElementById("nav-guide-text");
+const navEarly = document.getElementById("nav-early");
+const navNextChip = document.getElementById("nav-next-chip");
+const navNextText = document.getElementById("nav-next-text");
+const navProgressFill = document.getElementById("nav-progress-fill");
 const navDistance = document.getElementById("nav-distance");
 const navTurnLabel = document.getElementById("nav-turn-label");
 const navInstruction = document.getElementById("nav-instruction");
