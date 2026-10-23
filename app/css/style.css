@@ -1319,6 +1319,138 @@ select {
   border-radius: 999px;
 }
 
+/* 홈은 스크롤 없이 한 화면에 다 보이게: 세로로 나눠 담고, 카드 영역이 남는 높이를 가져간다.
+   아주 작은 화면에서 못 담으면 그때만 스크롤된다. */
+.home-screen {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px calc(76px + env(safe-area-inset-bottom));
+}
+
+.home-screen.hidden {
+  display: none;
+}
+
+.home-screen .home-hero {
+  flex: none;
+  min-height: 0;
+}
+
+.home-screen .home-hero-car {
+  width: 96px;
+  top: 0;
+}
+
+.home-screen .home-greeting {
+  margin: 4px 0 4px;
+}
+
+.home-screen .home-title {
+  font-size: 22px;
+  line-height: 29px;
+  margin-bottom: 4px;
+}
+
+.home-screen .home-sub {
+  font-size: 12px;
+}
+
+.home-screen .recommend-card {
+  flex: none;
+  margin-top: 10px;
+  padding: 16px;
+}
+
+.home-screen .recommend-title {
+  margin: 8px 0 6px;
+  font-size: 20px;
+}
+
+.home-screen .recommend-lv {
+  margin: 6px 0 12px;
+}
+
+.home-screen .recommend-go {
+  padding: 11px;
+}
+
+.home-screen .home-section-head {
+  flex: none;
+  margin: 16px 2px 8px;
+}
+
+.home-screen .home-grid {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: repeat(2, minmax(0, 168px)); /* 키 큰 화면에서 카드가 너무 길어지지 않게 */
+  align-content: start;
+  gap: 10px;
+}
+
+.home-screen .home-card {
+  min-height: 0;
+  padding: 12px 14px;
+  gap: 2px;
+}
+
+.home-screen .home-card-ic {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 6px;
+}
+
+.home-screen .home-card-ic .ic {
+  width: 19px;
+  height: 19px;
+}
+
+.home-screen .home-card-title {
+  font-size: 15px;
+}
+
+.home-screen .home-card-subtitle {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* 아주 작은 화면(세로 660px 이하)에서는 카드 설명 줄을 숨겨서 한 화면에 담는다 */
+@media (max-height: 660px) {
+  .home-screen .home-card-subtitle {
+    display: none;
+  }
+}
+
+/* 키가 작은 화면(작은 폰, 주소창이 보이는 브라우저)은 설명 줄을 줄여서 더 담는다 */
+@media (max-height: 720px) {
+  .home-screen .home-sub {
+    display: none;
+  }
+
+  .home-screen .home-hero-car {
+    width: 80px;
+  }
+
+  .home-screen .home-card {
+    padding: 9px 14px;
+  }
+
+  .home-screen .home-card-ic {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 3px;
+  }
+
+  .home-screen .home-card-ic .ic {
+    width: 17px;
+    height: 17px;
+  }
+
+  .home-screen .home-card-subtitle {
+    font-size: 11.5px;
+    line-height: 1.3;
+  }
+}
+
 /* ---------- 난이도별 코스 ---------- */
 
 .lv-desc {
