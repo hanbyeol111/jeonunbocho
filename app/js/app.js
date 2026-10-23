@@ -322,20 +322,40 @@ function findCautionGuides(guides) {
 const cautionBanner = document.getElementById("caution-banner");
 let cautionHideTimer = null;
 
-function showCaution(text) {
-  cautionBanner.textContent = `⚠️ ${text}`;
+/**
+ * 화면 배너와 음성으로 안내한다. 새 안내가 오면 아직 읽고 있던 이전 음성은 끊는다
+ * (안 끊으면 지나간 지점의 안내가 뒤늦게 이어서 읽힌다).
+ * @param {string} banner 배너에 띄울 문구
+ * @param {string} [speech] 음성으로 읽을 문구 (생략하면 banner와 같다)
+ * @param {number} [ms] 배너를 띄워 둘 시간
+ */
+function showCaution(banner, speech = banner, ms = 6000) {
+  cautionBanner.textContent = `⚠️ ${banner}`;
   cautionBanner.classList.remove("hidden");
 
   if ("speechSynthesis" in window) {
     try {
-      window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(speech);
+      utterance.lang = "ko-KR";
+      window.speechSynthesis.speak(utterance);
     } catch (err) {
       console.warn("음성 안내 실패:", err);
     }
   }
 
   clearTimeout(cautionHideTimer);
-  cautionHideTimer = setTimeout(() => cautionBanner.classList.add("hidden"), 6000);
+  cautionHideTimer = setTimeout(() => cautionBanner.classList.add("hidden"), ms);
+}
+
+// ---------- 주행 중 운전 팁 (js/tips.js의 문구를 쓴다) ----------
+
+const LANE_TIP_RADIUS_M = 300; // 회전 구간 이 거리 전에 "차선 변경이 필요하면" 팁을 준다
+
+/** 안내 문구(guidance)에서 어떤 팁을 줄지 고른다. 해당하는 게 없으면 null. */
+function tipKindFor(guide) {
+  const g = guide.guidance ?? "";
+  return window.TIP_PRIORITY.find((kw) => g.includes(kw)) ?? null;
 }
 
 // ---------- 실주행 화면 (다음 안내 방향/거리를 실시간으로 보여주는 전용 화면) ----------
@@ -469,20 +489,35 @@ function buildReport(guides = []) {
 function startDriveMonitoring(origin, guides, arrivalPoint = origin) {
   if (!("geolocation" in navigator)) return;
 
-  const cautionGuides = findCautionGuides(guides);
+  // 팁을 줄 안내 지점들. 회전 150m 전에 그 회전 팁을, 300m 전에 차선 변경 팁을 준다.
+  const tipGuides = guides.map((guide) => ({ guide, kind: tipKindFor(guide) })).filter((t) => t.kind);
   const triggered = new Set();
+  let laneTipsGiven = 0;
   let hasDeparted = false;
 
   watchId = navigator.geolocation.watchPosition(
     (pos) => {
       const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
 
-      cautionGuides.forEach((guide, idx) => {
-        if (triggered.has(idx)) return;
+      tipGuides.forEach(({ guide, kind }, idx) => {
+        const turnKey = `${idx}:turn`;
+        const laneKey = `${idx}:lane`;
+        if (triggered.has(turnKey)) return;
+
         const d = distanceMeters(here.lat, here.lng, guide.y, guide.x);
         if (d <= CAUTION_TRIGGER_RADIUS_M) {
-          triggered.add(idx);
-          showCaution(`잠시 후 ${guide.guidance}, 주변 상황을 확인하세요.`);
+          // 300m 팁을 못 받고 바로 150m 안으로 들어왔어도(GPS 튐 등) 차선 팁은 건너뛴다.
+          triggered.add(turnKey);
+          triggered.add(laneKey);
+          const tip = window.DRIVING_TIPS[kind];
+          showCaution(tip.banner, tip.speech);
+        } else if (d <= LANE_TIP_RADIUS_M && !triggered.has(laneKey)) {
+          triggered.add(laneKey);
+          // 전체 방법은 코스에서 처음 한 번만 읽어 주고, 그 뒤로는 짧게 알려준다.
+          const first = laneTipsGiven === 0;
+          const tip = first ? window.LANE_CHANGE_TIP.full : window.LANE_CHANGE_TIP.short;
+          laneTipsGiven += 1;
+          showCaution(tip.banner, tip.speech, first ? 14000 : 6000);
         }
       });
 
@@ -768,7 +803,38 @@ let pendingTitle = ""; // 완주 기록에 남길 코스 이름 ("순환 코스"
 let pendingDirectionLabel = "-"; // 브리핑의 '방향' 칸 ("무작위" / "북동" / "편도")
 const DIRECTION_NAMES = { 0: "북", 45: "북동", 90: "동", 135: "남동", 180: "남", 225: "남서", 270: "서", 315: "북서" };
 
+// "시작하기"를 누르면 바로 출발하지 않고, 출발 전 점검 카드를 한 번 보여준다.
+const predriveDialog = document.getElementById("predrive-dialog");
+const predriveList = document.getElementById("predrive-list");
+
+window.PREDRIVE_CHECKLIST.forEach((item) => {
+  const li = document.createElement("li");
+  const label = document.createElement("label");
+  label.className = "predrive-item";
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  const text = document.createElement("span");
+  const title = document.createElement("strong");
+  title.textContent = item.title;
+  const detail = document.createElement("small");
+  detail.textContent = item.detail;
+  text.append(title, detail);
+  label.append(box, text);
+  li.appendChild(label);
+  predriveList.appendChild(li);
+});
+
 briefingStartBtn.addEventListener("click", () => {
+  if (!pendingOrigin || !pendingGuides) return;
+  // 열 때마다 체크를 비워서, 매번 직접 하나씩 확인하게 한다.
+  predriveList.querySelectorAll("input").forEach((box) => (box.checked = false));
+  predriveDialog.showModal();
+});
+
+document.getElementById("predrive-cancel-btn").addEventListener("click", () => predriveDialog.close());
+
+document.getElementById("predrive-go-btn").addEventListener("click", () => {
+  predriveDialog.close();
   if (!pendingOrigin || !pendingGuides) return;
   briefingPanel.classList.add("hidden");
   enterNavMode(pendingOrigin, pendingGuides, pendingArrivalPoint || pendingOrigin, pendingSummary);

@@ -202,6 +202,54 @@ select {
   font-size: 17px;
 }
 
+/* ---------- 출발 전 점검 카드 ---------- */
+
+.predrive-lead {
+  margin: -8px 0 12px;
+  font-size: 13px;
+  color: #888;
+}
+
+.predrive-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.predrive-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 4px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #1c1c1e;
+  cursor: pointer;
+}
+
+.predrive-item input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  accent-color: var(--navy);
+}
+
+.predrive-item strong {
+  display: block;
+  font-size: 14px;
+}
+
+.predrive-item small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #888;
+}
+
 /* ---------- 거리 휠 피커 (알람 시간 맞추듯 스크롤로 고르기) ---------- */
 
 .wheel-picker-frame {
