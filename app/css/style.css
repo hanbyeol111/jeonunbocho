@@ -1357,7 +1357,7 @@ select {
 
 .home-screen .recommend-card {
   flex: none;
-  margin-top: 10px;
+  margin-top: 22px; /* 인사말과 추천 카드 사이를 벌린다. 늘어난 만큼 아래 카드 높이가 줄어든다 */
   padding: 16px;
 }
 
@@ -1429,6 +1429,10 @@ select {
 
 /* 키가 작은 화면(작은 폰, 주소창이 보이는 브라우저)은 설명 줄을 줄여서 더 담는다 */
 @media (max-height: 720px) {
+  .home-screen .recommend-card {
+    margin-top: 14px;
+  }
+
   .home-screen .home-sub {
     display: none;
   }

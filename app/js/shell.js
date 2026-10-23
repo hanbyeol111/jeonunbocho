@@ -373,7 +373,7 @@
 
   // 프로필 맨 아래에 앱 버전과 뒤로가기 처리 상태를 작게 보여준다.
   // (새로고침했는데도 옛 버전이 남아 있는지, 뒤로가기 처리가 켜졌는지 확인하려는 용도)
-  const APP_VERSION = 24; // service-worker.js의 CACHE_NAME 번호와 같이 올린다
+  const APP_VERSION = 25; // service-worker.js의 CACHE_NAME 번호와 같이 올린다
   function updateVersionLabel() {
     $("app-version").textContent = `앱 버전 v${APP_VERSION} · 뒤로가기 처리 ${backArmed ? "켜짐" : "꺼짐"}`;
   }
