@@ -1324,7 +1324,7 @@ select {
 .home-screen {
   display: flex;
   flex-direction: column;
-  padding: 20px 20px calc(76px + env(safe-area-inset-bottom));
+  padding: 20px 20px calc(72px + env(safe-area-inset-bottom));
 }
 
 .home-screen.hidden {
@@ -1382,8 +1382,7 @@ select {
 .home-screen .home-grid {
   flex: 1;
   min-height: 0;
-  grid-template-rows: repeat(2, minmax(0, 168px)); /* 키 큰 화면에서 카드가 너무 길어지지 않게 */
-  align-content: start;
+  grid-template-rows: 1fr 1fr; /* 남는 높이를 카드 두 줄이 똑같이 나눠서, 하단 바 바로 위까지 딱 채운다 */
   gap: 10px;
 }
 
@@ -1411,6 +1410,14 @@ select {
 .home-screen .home-card-subtitle {
   font-size: 12px;
   line-height: 1.4;
+}
+
+/* 아주 키가 큰 화면(세로 900px 이상)에서는 카드가 너무 길어지지 않게 높이를 제한한다 */
+@media (min-height: 900px) {
+  .home-screen .home-grid {
+    grid-template-rows: repeat(2, minmax(0, 200px));
+    align-content: start;
+  }
 }
 
 /* 아주 작은 화면(세로 660px 이하)에서는 카드 설명 줄을 숨겨서 한 화면에 담는다 */
