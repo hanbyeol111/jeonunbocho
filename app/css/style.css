@@ -1024,6 +1024,10 @@ select {
   border-top: 1px solid #eee;
 }
 
+.tab-bar.hidden {
+  display: none; /* .tab-bar 자체의 display:flex가 공통 .hidden보다 우선해서, 따로 한 번 더 막아야 숨겨진다 */
+}
+
 .tab-item {
   flex: 1;
   display: flex;
