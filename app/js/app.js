@@ -19,6 +19,10 @@
 let map = null;
 let currentPosition = null; // { lat, lng }
 let currentMarker = null; // 현재 위치 마커 (재사용)
+let carOverlay = null; // 주행 중 내 차 표시 (카카오 기본 마커 대신)
+let carTri = null; // 진행 방향을 가리키는 삼각형 요소
+let carHeading = 0; // 진행 방향(도, 북쪽이 0)
+let lastHeadingPoint = null; // 방향을 직접 계산할 때 기준이 되는 이전 위치
 let followMe = false; // 주행 중 지도가 내 위치를 따라가는지 ("내 위치로" 버튼을 누르면 다시 켜진다)
 const NAV_MAP_LEVEL = 3; // 주행 화면 지도 확대 단계 (숫자가 작을수록 가까움)
 
@@ -328,6 +332,38 @@ function distanceMeters(lat1, lng1, lat2, lng2) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
+/** 두 좌표 사이의 진행 방향(도). 북쪽이 0, 시계 방향으로 늘어난다. */
+function bearingBetween(a, b) {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const y = Math.sin(toRad(b.lng - a.lng)) * Math.cos(toRad(b.lat));
+  const x =
+    Math.cos(toRad(a.lat)) * Math.sin(toRad(b.lat)) -
+    Math.sin(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.cos(toRad(b.lng - a.lng));
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+/** 주행 중 내 차 표시를 만들거나 위치/방향을 갱신한다. 이때는 카카오 기본 마커를 숨긴다. */
+function updateCarOverlay(point) {
+  if (!map) return;
+  const latlng = new kakao.maps.LatLng(point.lat, point.lng);
+  if (!carOverlay) {
+    const el = document.createElement("div");
+    el.className = "car-marker";
+    el.innerHTML = '<span class="car-halo"></span><span class="car-dot"><span class="car-tri"></span></span>';
+    carTri = el.querySelector(".car-tri");
+    carOverlay = new kakao.maps.CustomOverlay({ position: latlng, content: el, xAnchor: 0, yAnchor: 0, zIndex: 10 });
+  }
+  carOverlay.setPosition(latlng);
+  carOverlay.setMap(map);
+  carTri.style.transform = `rotate(${Math.round(carHeading)}deg)`;
+  if (currentMarker) currentMarker.setVisible(false);
+}
+
+function hideCarOverlay() {
+  if (carOverlay) carOverlay.setMap(null);
+  if (currentMarker) currentMarker.setVisible(true);
+}
+
 // ---------- 7. 주행 중 주의 안내 ----------
 
 // 안내 문구에 이 단어들이 포함되면 "주의가 필요한 구간"으로 본다.
@@ -460,6 +496,29 @@ function formatDistance(m) {
   return m >= 1000 ? `${(m / 1000).toFixed(1)}km` : `${Math.round(m)}m`;
 }
 
+// 어느 쪽에 붙어 있을지 보여주는 칸. 차로 수는 모르기 때문에 "왼쪽/가운데/오른쪽" 방향만 알려 준다.
+const LANE_LAYOUTS = {
+  right: { glyphs: ["↑", "↑", "↱"], target: 2 },
+  left: { glyphs: ["↰", "↑", "↑"], target: 0 },
+  uturn: { glyphs: ["↶", "↑", "↑"], target: 0 },
+  straight: { glyphs: ["↑"], target: 0 },
+  arrive: { glyphs: ["↑"], target: 0 },
+};
+let navLaneKey = null;
+
+function renderNavLanes(key) {
+  if (key === navLaneKey) return; // 같은 안내가 이어지는 동안은 다시 그리지 않는다
+  navLaneKey = key;
+  const layout = LANE_LAYOUTS[key];
+  navLanes.innerHTML = "";
+  layout.glyphs.forEach((glyph, i) => {
+    const box = document.createElement("div");
+    box.className = `nav-lane${i === layout.target ? " target" : ""}`;
+    box.textContent = glyph;
+    navLanes.appendChild(box);
+  });
+}
+
 let navTotalM = 0; // 코스 전체 거리(m). 진행 막대와 남은 거리 계산의 기준
 let navTotalMin = null; // 코스 전체 예상 시간(분)
 
@@ -478,7 +537,9 @@ function updateNavDisplay(here, guides) {
     dist = distanceMeters(here.lat, here.lng, target.y, target.x);
   }
 
-  const [iconA, iconB] = NAV_ICONS[navIconKey(target)];
+  const iconKey = navIconKey(target);
+  renderNavLanes(iconKey);
+  const [iconA, iconB] = NAV_ICONS[iconKey];
   navIconA.setAttribute("d", iconA);
   navIconB.setAttribute("d", iconB);
   navDistance.textContent = formatDistance(dist);
@@ -520,6 +581,9 @@ function updateNavDisplay(here, guides) {
     navEta.textContent = pendingTitle;
   }
   navProgressFill.style.width = `${Math.round(progress * 100)}%`;
+
+  // "그 다음" 칩과 주의 배너가 안내 카드 바로 아래에 오도록, 카드 아래 끝 위치를 CSS 변수로 알려 준다.
+  document.documentElement.style.setProperty("--nav-card-bottom", `${navCardEl.offsetTop + navCardEl.offsetHeight}px`);
 }
 
 /**
@@ -546,6 +610,10 @@ function enterNavMode(origin, guides, arrivalPoint = origin, summary = null) {
   // 코스 전체가 보이던 넓은 지도에서, 내 위치 근처가 크게 보이는 가까운 지도로 바꾼다.
   followMe = true;
   zoomToStart(origin);
+  const firstTarget = guides[Math.min(1, guides.length - 1)];
+  lastHeadingPoint = { lat: origin.lat, lng: origin.lng };
+  carHeading = firstTarget ? bearingBetween(origin, { lat: firstTarget.y, lng: firstTarget.x }) : 0;
+  updateCarOverlay(origin);
   updateNavDisplay(origin, guides); // 첫 화면을 바로 채워둔다 (다음 GPS 업데이트를 기다리지 않고)
 
   startDriveMonitoring(origin, guides, arrivalPoint);
@@ -560,6 +628,8 @@ function zoomToStart(point) {
 
 function exitNavMode() {
   followMe = false;
+  document.documentElement.style.removeProperty("--nav-card-bottom");
+  hideCarOverlay();
   hideCautionModal();
   navScreen.classList.add("hidden");
   appHeader.classList.remove("hidden");
@@ -702,6 +772,16 @@ function startDriveMonitoring(origin, guides, arrivalPoint = origin) {
         currentMarker.setPosition(point);
         if (followMe) map.setCenter(point);
       }
+      // 진행 방향: GPS가 알려주면 그 값을, 없으면 3m 이상 움직였을 때 이전 위치와 비교해서 구한다.
+      const gpsHeading = pos.coords.heading;
+      if (typeof gpsHeading === "number" && !Number.isNaN(gpsHeading)) {
+        carHeading = gpsHeading;
+      } else if (lastHeadingPoint && distanceMeters(lastHeadingPoint.lat, lastHeadingPoint.lng, here.lat, here.lng) > 3) {
+        carHeading = bearingBetween(lastHeadingPoint, here);
+        lastHeadingPoint = here;
+      }
+      if (!lastHeadingPoint) lastHeadingPoint = here;
+      updateCarOverlay(here);
 
       tipGuides.forEach(({ guide, kind }, idx) => {
         const turnKey = `${idx}:turn`;
@@ -902,6 +982,8 @@ const navEarly = document.getElementById("nav-early");
 const navNextChip = document.getElementById("nav-next-chip");
 const navNextText = document.getElementById("nav-next-text");
 const navProgressFill = document.getElementById("nav-progress-fill");
+const navLanes = document.getElementById("nav-lanes");
+const navCardEl = document.querySelector(".nav-card");
 const navDistance = document.getElementById("nav-distance");
 const navTurnLabel = document.getElementById("nav-turn-label");
 const navInstruction = document.getElementById("nav-instruction");
